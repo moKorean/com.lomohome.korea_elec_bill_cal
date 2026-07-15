@@ -238,12 +238,12 @@ class KoreaElecDevice extends Device {
 
       // Update capabilities
       await this.setCapabilityValue('meter_power', meterValue).catch(this.error);
-      await this.setCapabilityValue('meter_kwh_this_month', Math.round(monthUsage * 10) / 10).catch(this.error);
-      await this.setCapabilityValue('meter_kwh_this_year', Math.round(yearUsage * 10) / 10).catch(this.error);
+      await this.setCapabilityValue('meter_kwh_this_month', Math.round(monthUsage * 100) / 100).catch(this.error);
+      await this.setCapabilityValue('meter_kwh_this_year', Math.round(yearUsage * 100) / 100).catch(this.error);
       const thisHourUsage = Math.max(0, meterValue - this.hourStartMeter);
       await this.setCapabilityValue('meter_kwh_this_hour', Math.round(thisHourUsage * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_kwh_last_hour', Math.round(this.lastHourUsage * 100) / 100).catch(this.error);
-      await this.setCapabilityValue('meter_kwh_last_day', Math.round(this.lastDayUsage * 10) / 10).catch(this.error);
+      await this.setCapabilityValue('meter_kwh_last_day', Math.round(this.lastDayUsage * 100) / 100).catch(this.error);
 
       // Today's usage (since midnight)
       const todayUsage = Math.max(0, meterValue - this.todayStartMeter);
@@ -257,7 +257,7 @@ class KoreaElecDevice extends Device {
       const comparison = this.calculateMonthComparison(monthUsage);
       await this.setCapabilityValue('meter_month_comparison', Math.round(comparison * 10) / 10).catch(this.error);
 
-      await this.setCapabilityValue('meter_kwh_last_month', Math.round(this.lastMonthUsage * 10) / 10).catch(this.error);
+      await this.setCapabilityValue('meter_kwh_last_month', Math.round(this.lastMonthUsage * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_money_last_month', this.formatMoney(this.lastMonthBill)).catch(this.error);
       await this.setCapabilityValue('meter_money_this_month', this.formatMoney(billResult.total)).catch(this.error);
 
@@ -294,7 +294,7 @@ class KoreaElecDevice extends Device {
 
       // Calculate forecast (예상 사용량/요금)
       const forecast = this.calculateForecast(monthUsage, nowLocal);
-      await this.setCapabilityValue('meter_kwh_forecast', Math.round(forecast.kwhForecast * 10) / 10).catch(this.error);
+      await this.setCapabilityValue('meter_kwh_forecast', Math.round(forecast.kwhForecast * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_money_forecast', this.formatMoney(forecast.moneyForecast)).catch(this.error);
 
     } catch (error) {
@@ -356,18 +356,29 @@ class KoreaElecDevice extends Device {
       this.yearStartMeter = newSettings.meter_year_start;
     }
 
-    // If source device changed, reconnect
-    if (changedKeys.includes('homey_device_id')) {
-      if (this.capabilityListener) {
-        this.capabilityListener.destroy();
-      }
-      await this.setupSourceDevice();
-    }
+    // Defer reconnect/recalculation until AFTER Homey has committed the new
+    // settings. setupSourceDevice()/updateMeter() call this.setSettings()
+    // internally (hour/day/billing-period rollover); calling setSettings while
+    // onSettings is still resolving is a Homey anti-pattern that races with the
+    // settings commit, so we run it once the handler has returned.
+    this.homey.setTimeout(async () => {
+      try {
+        // If source device changed, reconnect
+        if (changedKeys.includes('homey_device_id')) {
+          if (this.capabilityListener) {
+            this.capabilityListener.destroy();
+          }
+          await this.setupSourceDevice();
+        }
 
-    // Recalculate with current meter value
-    if (this.lastMeterValue > 0) {
-      await this.updateMeter(this.lastMeterValue - this.meterTotalStart);
-    }
+        // Recalculate with current meter value
+        if (this.lastMeterValue > 0) {
+          await this.updateMeter(this.lastMeterValue - this.meterTotalStart);
+        }
+      } catch (err) {
+        this.error('Deferred settings recalculation failed:', err);
+      }
+    }, 1000);
   }
 
   onDeleted() {
