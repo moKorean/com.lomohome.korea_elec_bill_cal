@@ -488,13 +488,21 @@ class KoreaElecDevice extends Device {
     let month = localDate.getMonth();
     const day = localDate.getDate();
 
-    // If check_day is 0, it means last day of month
-    // If current day is before check_day, we're still in previous billing period
+    // If check_day is 0, it means last day of month: billing period is always
+    // the current calendar month (transition on the 1st).
     if (checkDay === 0) {
-      // Last day of month: billing period changes on 1st
-      // So if today is any day, billing period is current month
-    } else if (day < checkDay) {
-      // Before check_day: still in previous month's billing period
+      return { year, month };
+    }
+
+    // Clamp the meter reading day to the last day of the current month so that
+    // check_day 29~31 still transitions on the last day of shorter months
+    // (e.g. check_day=31 in February transitions on the 28th/29th, not the 1st
+    //  of March). For check_day 1~28 this is a no-op.
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const effectiveCheckDay = Math.min(checkDay, daysInMonth);
+
+    // Before the (effective) check day: still in previous month's billing period
+    if (day < effectiveCheckDay) {
       month -= 1;
       if (month < 0) {
         month = 11;
