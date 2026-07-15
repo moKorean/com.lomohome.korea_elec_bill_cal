@@ -1,6 +1,6 @@
 /*
  * Korea Electricity Bill Calculator Device
- * Copyright 2024, LomoHome (mokorean@gmail.com)
+ * Copyright 2024, Geunwon Mo (mokorean@gmail.com)
  *
  * Based on Power by the Hour by Robin de Gruijter
  * Korean electricity rate calculation based on kwh_to_won by dugurs
