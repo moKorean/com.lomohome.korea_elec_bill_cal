@@ -258,8 +258,8 @@ class KoreaElecDevice extends Device {
       await this.setCapabilityValue('meter_month_comparison', Math.round(comparison * 10) / 10).catch(this.error);
 
       await this.setCapabilityValue('meter_kwh_last_month', Math.round(this.lastMonthUsage * 100) / 100).catch(this.error);
-      await this.setCapabilityValue('meter_money_last_month', this.formatMoney(this.lastMonthBill)).catch(this.error);
-      await this.setCapabilityValue('meter_money_this_month', this.formatMoney(billResult.total)).catch(this.error);
+      await this.setCapabilityValue('meter_money_last_month', Math.round(this.lastMonthBill)).catch(this.error);
+      await this.setCapabilityValue('meter_money_this_month', Math.round(billResult.total)).catch(this.error);
 
       // Check for step change and trigger flow
       const newStep = billResult.kwhStep || 1;
@@ -290,12 +290,12 @@ class KoreaElecDevice extends Device {
 
       // Calculate year total: accumulated past months + current month estimate
       const yearTotalBill = this.yearAccumulatedBill + billResult.total;
-      await this.setCapabilityValue('meter_money_this_year', this.formatMoney(yearTotalBill)).catch(this.error);
+      await this.setCapabilityValue('meter_money_this_year', Math.round(yearTotalBill)).catch(this.error);
 
       // Calculate forecast (예상 사용량/요금)
       const forecast = this.calculateForecast(monthUsage, nowLocal);
       await this.setCapabilityValue('meter_kwh_forecast', Math.round(forecast.kwhForecast * 100) / 100).catch(this.error);
-      await this.setCapabilityValue('meter_money_forecast', this.formatMoney(forecast.moneyForecast)).catch(this.error);
+      await this.setCapabilityValue('meter_money_forecast', Math.round(forecast.moneyForecast)).catch(this.error);
 
     } catch (error) {
       this.error('Failed to calculate bill:', error);
@@ -386,10 +386,6 @@ class KoreaElecDevice extends Device {
     if (this.capabilityListener) {
       this.capabilityListener.destroy();
     }
-  }
-
-  formatMoney(value) {
-    return `₩${Math.round(value).toLocaleString('ko-KR')}`;
   }
 
   /**

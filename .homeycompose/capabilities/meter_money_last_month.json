@@ -1,12 +1,17 @@
 {
-  "type": "string",
+  "type": "number",
   "title": {
     "en": "Last Month Cost",
     "ko": "지난달 요금"
   },
+  "units": {
+    "en": "₩",
+    "ko": "원"
+  },
+  "decimals": 0,
   "uiComponent": "sensor",
   "icon": "/assets/money.svg",
   "getable": true,
   "setable": false,
-  "insights": false
+  "insights": true
 }

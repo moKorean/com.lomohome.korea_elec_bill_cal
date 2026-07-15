@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.lomohome.korea_elec_bill_cal",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "compatibility": ">=12.9.0",
   "brandColor": "#0066cc",
   "sdk": 3,
@@ -185,7 +185,7 @@
           "units": {
             "en": "kWh"
           },
-          "decimals": 1
+          "decimals": 2
         },
         "meter_kwh_this_year": {
           "title": {
@@ -195,7 +195,7 @@
           "units": {
             "en": "kWh"
           },
-          "decimals": 1
+          "decimals": 2
         },
         "meter_kwh_this_hour": {
           "title": {
@@ -225,7 +225,7 @@
           "units": {
             "en": "kWh"
           },
-          "decimals": 1
+          "decimals": 2
         },
         "meter_kwh_last_month": {
           "title": {
@@ -235,7 +235,7 @@
           "units": {
             "en": "kWh"
           },
-          "decimals": 1
+          "decimals": 2
         },
         "meter_money_this_month": {
           "title": {
@@ -280,7 +280,7 @@
           "units": {
             "en": "kWh"
           },
-          "decimals": 1
+          "decimals": 2
         },
         "meter_money_forecast": {
           "title": {
@@ -551,8 +551,8 @@
                 "ko": "월초(검침일) 미터값 (kWh)"
               },
               "hint": {
-                "en": "Meter value at the start of billing period (meter reading day)",
-                "ko": "검침일 기준 미터값"
+                "en": "Your electricity meter reading (kWh) on the last KEPCO meter-reading day. Used as the baseline for this month's usage. On first install this is auto-set to the current reading; if you added the device mid-month, enter the reading from your meter-reading day for an accurate this-month total.",
+                "ko": "지난 검침일 기준 전력량계 미터값(kWh)입니다. 이번달 사용량 계산의 기준점으로 쓰입니다. 최초 설치 시 현재 값으로 자동 설정되며, 월 중간에 추가했다면 검침일 당시 미터값을 직접 입력해야 이번달 사용량이 정확합니다."
               },
               "value": 0,
               "decimals": 2
@@ -563,6 +563,10 @@
               "label": {
                 "en": "Year Start (kWh)",
                 "ko": "연초 미터값 (kWh)"
+              },
+              "hint": {
+                "en": "Your electricity meter reading (kWh) at the start of the year. Used as the baseline for this year's usage. On first install this is auto-set to the current reading; enter the January 1st reading for an accurate year-to-date total.",
+                "ko": "연초(1월 1일) 기준 전력량계 미터값(kWh)입니다. 올해 누적 사용량 계산의 기준점으로 쓰입니다. 최초 설치 시 현재 값으로 자동 설정되며, 연초 미터값을 직접 입력하면 올해 누적 사용량이 정확합니다."
               },
               "value": 0,
               "decimals": 2
@@ -758,52 +762,72 @@
       "decimals": 2
     },
     "meter_money_forecast": {
-      "type": "string",
+      "type": "number",
       "title": {
         "en": "Forecast Cost",
         "ko": "예상 요금"
       },
+      "units": {
+        "en": "₩",
+        "ko": "원"
+      },
+      "decimals": 0,
       "uiComponent": "sensor",
       "icon": "/assets/money.svg",
       "getable": true,
       "setable": false,
-      "insights": false
+      "insights": true
     },
     "meter_money_last_month": {
-      "type": "string",
+      "type": "number",
       "title": {
         "en": "Last Month Cost",
         "ko": "지난달 요금"
       },
+      "units": {
+        "en": "₩",
+        "ko": "원"
+      },
+      "decimals": 0,
       "uiComponent": "sensor",
       "icon": "/assets/money.svg",
       "getable": true,
       "setable": false,
-      "insights": false
+      "insights": true
     },
     "meter_money_this_month": {
-      "type": "string",
+      "type": "number",
       "title": {
         "en": "This Month Cost",
         "ko": "이번달 예상 요금"
       },
+      "units": {
+        "en": "₩",
+        "ko": "원"
+      },
+      "decimals": 0,
       "uiComponent": "sensor",
       "icon": "/assets/money.svg",
       "getable": true,
       "setable": false,
-      "insights": false
+      "insights": true
     },
     "meter_money_this_year": {
-      "type": "string",
+      "type": "number",
       "title": {
         "en": "This Year Cost",
         "ko": "올해 누적 요금"
       },
+      "units": {
+        "en": "₩",
+        "ko": "원"
+      },
+      "decimals": 0,
       "uiComponent": "sensor",
       "icon": "/assets/money.svg",
       "getable": true,
       "setable": false,
-      "insights": false
+      "insights": true
     },
     "meter_month_comparison": {
       "type": "number",
