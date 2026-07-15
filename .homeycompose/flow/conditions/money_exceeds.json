@@ -1,0 +1,32 @@
+{
+  "id": "money_exceeds",
+  "title": {
+    "en": "This month cost !{{exceeds|doesn't exceed}} amount",
+    "ko": "이번달 예상 요금이 금액을 !{{초과|초과하지 않으면}}"
+  },
+  "titleFormatted": {
+    "en": "This month cost !{{exceeds|doesn't exceed}} [[amount]] won",
+    "ko": "이번달 예상 요금이 [[amount]]원을 !{{초과|초과하지 않으면}}"
+  },
+  "hint": {
+    "en": "Check if this month's estimated cost exceeds the specified amount",
+    "ko": "이번달 예상 요금이 지정한 금액을 초과하는지 확인합니다"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=korea_elec"
+    },
+    {
+      "type": "number",
+      "name": "amount",
+      "title": {
+        "en": "Amount (₩)",
+        "ko": "금액 (원)"
+      },
+      "min": 0,
+      "step": 1000
+    }
+  ]
+}

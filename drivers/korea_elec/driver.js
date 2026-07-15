@@ -13,6 +13,27 @@ class KoreaElecDriver extends Driver {
 
   async onInit() {
     this.log('Korea Electricity Driver initialized');
+
+    // Register flow trigger for step change
+    this.homey.flow.getDeviceTriggerCard('kwh_step_changed')
+      .registerRunListener(async (args, state) => true);
+
+    // Register flow condition for money exceeds
+    this.homey.flow.getConditionCard('money_exceeds')
+      .registerRunListener(async (args) => {
+        const { device, amount } = args;
+        return device.currentMonthBill > amount;
+      });
+  }
+
+  async triggerKwhStepChanged(device, tokens) {
+    try {
+      await this.homey.flow.getDeviceTriggerCard('kwh_step_changed')
+        .trigger(device, tokens);
+      this.log(`Triggered kwh_step_changed: ${tokens.old_step} -> ${tokens.new_step}`);
+    } catch (error) {
+      this.error('Failed to trigger kwh_step_changed:', error);
+    }
   }
 
   async onPairListDevices() {
@@ -32,7 +53,7 @@ class KoreaElecDriver extends Driver {
       for (const [id, device] of Object.entries(allDevices)) {
         if (device.capabilities && device.capabilities.includes('meter_power')) {
           devices.push({
-            name: `${device.name} (한국 전력)`,
+            name: device.name,
             data: {
               id: `korea_elec_${id}`,
             },
@@ -43,6 +64,7 @@ class KoreaElecDriver extends Driver {
               pressure: 'low',
               bigfam_dc: '0',
               welfare_dc: '0',
+              meter_total_start: 0,
               meter_month_start: 0,
               meter_year_start: 0,
             },

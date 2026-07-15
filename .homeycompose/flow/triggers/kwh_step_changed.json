@@ -1,0 +1,38 @@
+{
+  "id": "kwh_step_changed",
+  "title": {
+    "en": "Progressive step changed",
+    "ko": "누진 단계가 변경되면"
+  },
+  "hint": {
+    "en": "Triggers when the progressive rate step changes",
+    "ko": "누진 단계가 변경될 때 실행됩니다"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=korea_elec"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "old_step",
+      "type": "number",
+      "title": {
+        "en": "Previous step",
+        "ko": "이전 단계"
+      },
+      "example": 1
+    },
+    {
+      "name": "new_step",
+      "type": "number",
+      "title": {
+        "en": "New step",
+        "ko": "새 단계"
+      },
+      "example": 2
+    }
+  ]
+}

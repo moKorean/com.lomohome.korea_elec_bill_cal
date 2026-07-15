@@ -49,12 +49,31 @@ class KoreaElecDevice extends Device {
   async initMeterValues() {
     // Restore stored values
     this.lastMeterValue = await this.getStoreValue('lastMeterValue') || 0;
+    this.meterTotalStart = this.settings.meter_total_start || 0;
     this.monthStartMeter = this.settings.meter_month_start || 0;
     this.yearStartMeter = this.settings.meter_year_start || 0;
 
     // Restore last reading times
     this.lastReadingMonth = await this.getStoreValue('lastReadingMonth') || { month: new Date().getMonth() };
     this.lastReadingYear = await this.getStoreValue('lastReadingYear') || { year: new Date().getFullYear() };
+
+    // Restore accumulated year bill (sum of completed months)
+    this.yearAccumulatedBill = await this.getStoreValue('yearAccumulatedBill') || 0;
+
+    // Restore hour/day/month tracking
+    this.lastReadingHour = await this.getStoreValue('lastReadingHour') || { hour: new Date().getHours() };
+    this.lastReadingDay = await this.getStoreValue('lastReadingDay') || { day: new Date().getDate() };
+    this.hourStartMeter = await this.getStoreValue('hourStartMeter') || 0;
+    this.dayStartMeter = await this.getStoreValue('dayStartMeter') || 0;
+
+    // Restore last period values
+    this.lastHourUsage = await this.getStoreValue('lastHourUsage') || 0;
+    this.lastDayUsage = await this.getStoreValue('lastDayUsage') || 0;
+    this.lastMonthUsage = await this.getStoreValue('lastMonthUsage') || 0;
+
+    // Store current bill and step for flow triggers
+    this.currentMonthBill = 0;
+    this.currentKwhStep = await this.getStoreValue('currentKwhStep') || 1;
   }
 
   async setupSourceDevice() {
@@ -96,31 +115,75 @@ class KoreaElecDevice extends Device {
     }
   }
 
-  async updateMeter(meterValue) {
-    if (typeof meterValue !== 'number') {
-      this.log('Invalid meter value:', meterValue);
+  async updateMeter(sourceMeterValue) {
+    if (typeof sourceMeterValue !== 'number') {
+      this.log('Invalid meter value:', sourceMeterValue);
       return;
     }
+
+    // Apply total meter offset
+    const meterValue = sourceMeterValue + this.meterTotalStart;
 
     const now = new Date();
     const nowLocal = new Date(now.toLocaleString('en-US', { timeZone: this.timeZone }));
 
-    // Check for new month
-    if (nowLocal.getMonth() !== this.lastReadingMonth.month) {
-      this.log('New month detected');
-      this.monthStartMeter = this.lastMeterValue;
-      this.lastReadingMonth = { month: nowLocal.getMonth() };
-      await this.setStoreValue('lastReadingMonth', this.lastReadingMonth);
-      await this.setSettings({ meter_month_start: this.monthStartMeter }).catch(this.error);
+    // Check for new hour
+    if (nowLocal.getHours() !== this.lastReadingHour.hour) {
+      this.log('New hour detected');
+      // Save last hour usage
+      this.lastHourUsage = Math.max(0, this.lastMeterValue - this.hourStartMeter);
+      await this.setStoreValue('lastHourUsage', this.lastHourUsage);
+
+      this.hourStartMeter = this.lastMeterValue;
+      this.lastReadingHour = { hour: nowLocal.getHours() };
+      await this.setStoreValue('lastReadingHour', this.lastReadingHour);
+      await this.setStoreValue('hourStartMeter', this.hourStartMeter);
     }
 
-    // Check for new year
+    // Check for new day
+    if (nowLocal.getDate() !== this.lastReadingDay.day) {
+      this.log('New day detected');
+      // Save last day usage
+      this.lastDayUsage = Math.max(0, this.lastMeterValue - this.dayStartMeter);
+      await this.setStoreValue('lastDayUsage', this.lastDayUsage);
+
+      this.dayStartMeter = this.lastMeterValue;
+      this.lastReadingDay = { day: nowLocal.getDate() };
+      await this.setStoreValue('lastReadingDay', this.lastReadingDay);
+      await this.setStoreValue('dayStartMeter', this.dayStartMeter);
+    }
+
+    // Check for new year first (before month check)
     if (nowLocal.getFullYear() !== this.lastReadingYear.year) {
       this.log('New year detected');
       this.yearStartMeter = this.lastMeterValue;
       this.lastReadingYear = { year: nowLocal.getFullYear() };
+      this.yearAccumulatedBill = 0; // Reset accumulated bill for new year
       await this.setStoreValue('lastReadingYear', this.lastReadingYear);
+      await this.setStoreValue('yearAccumulatedBill', 0);
       await this.setSettings({ meter_year_start: this.yearStartMeter }).catch(this.error);
+    }
+
+    // Check for new month
+    if (nowLocal.getMonth() !== this.lastReadingMonth.month) {
+      this.log('New month detected');
+
+      // Save last month usage
+      this.lastMonthUsage = Math.max(0, this.lastMeterValue - this.monthStartMeter);
+      await this.setStoreValue('lastMonthUsage', this.lastMonthUsage);
+
+      // Calculate and save last month's bill before resetting
+      if (this.lastMonthUsage > 0) {
+        const lastMonthBill = this.calculator.getSimpleBill(this.lastMonthUsage);
+        this.yearAccumulatedBill += lastMonthBill.total;
+        await this.setStoreValue('yearAccumulatedBill', this.yearAccumulatedBill);
+        this.log(`Added last month bill: ${lastMonthBill.total}, Year total: ${this.yearAccumulatedBill}`);
+      }
+
+      this.monthStartMeter = this.lastMeterValue;
+      this.lastReadingMonth = { month: nowLocal.getMonth() };
+      await this.setStoreValue('lastReadingMonth', this.lastReadingMonth);
+      await this.setSettings({ meter_month_start: this.monthStartMeter }).catch(this.error);
     }
 
     // Calculate usage
@@ -136,8 +199,27 @@ class KoreaElecDevice extends Device {
       await this.setCapabilityValue('meter_power', meterValue).catch(this.error);
       await this.setCapabilityValue('meter_kwh_this_month', Math.round(monthUsage * 10) / 10).catch(this.error);
       await this.setCapabilityValue('meter_kwh_this_year', Math.round(yearUsage * 10) / 10).catch(this.error);
-      await this.setCapabilityValue('meter_money_this_month', billResult.total).catch(this.error);
-      await this.setCapabilityValue('kwh_step', billResult.kwhStep || 1).catch(this.error);
+      await this.setCapabilityValue('meter_kwh_last_hour', Math.round(this.lastHourUsage * 100) / 100).catch(this.error);
+      await this.setCapabilityValue('meter_kwh_last_day', Math.round(this.lastDayUsage * 10) / 10).catch(this.error);
+      await this.setCapabilityValue('meter_kwh_last_month', Math.round(this.lastMonthUsage * 10) / 10).catch(this.error);
+      await this.setCapabilityValue('meter_money_this_month', this.formatMoney(billResult.total)).catch(this.error);
+
+      // Check for step change and trigger flow
+      const newStep = billResult.kwhStep || 1;
+      if (newStep !== this.currentKwhStep) {
+        this.log(`Progressive step changed: ${this.currentKwhStep} -> ${newStep}`);
+        const oldStep = this.currentKwhStep;
+        this.currentKwhStep = newStep;
+        await this.setStoreValue('currentKwhStep', newStep);
+
+        // Trigger flow
+        await this.driver.triggerKwhStepChanged(this, { old_step: oldStep, new_step: newStep });
+      }
+
+      await this.setCapabilityValue('kwh_step', newStep).catch(this.error);
+
+      // Store current bill for condition check
+      this.currentMonthBill = billResult.total;
 
       // Calculate average tariff
       if (monthUsage > 0) {
@@ -145,15 +227,15 @@ class KoreaElecDevice extends Device {
         await this.setCapabilityValue('meter_tariff', avgTariff).catch(this.error);
       }
 
-      // Calculate year total (approximate based on monthly average)
-      const yearBillResult = this.calculator.getSimpleBill(yearUsage);
-      await this.setCapabilityValue('meter_money_this_year', yearBillResult.total).catch(this.error);
+      // Calculate year total: accumulated past months + current month estimate
+      const yearTotalBill = this.yearAccumulatedBill + billResult.total;
+      await this.setCapabilityValue('meter_money_this_year', this.formatMoney(yearTotalBill)).catch(this.error);
 
     } catch (error) {
       this.error('Failed to calculate bill:', error);
     }
 
-    // Store last meter value
+    // Store last meter value (with offset applied)
     this.lastMeterValue = meterValue;
     await this.setStoreValue('lastMeterValue', meterValue);
   }
@@ -168,6 +250,9 @@ class KoreaElecDevice extends Device {
     this.initCalculator();
 
     // If meter start values changed, recalculate
+    if (changedKeys.includes('meter_total_start')) {
+      this.meterTotalStart = newSettings.meter_total_start;
+    }
     if (changedKeys.includes('meter_month_start')) {
       this.monthStartMeter = newSettings.meter_month_start;
     }
@@ -194,6 +279,10 @@ class KoreaElecDevice extends Device {
     if (this.capabilityListener) {
       this.capabilityListener.destroy();
     }
+  }
+
+  formatMoney(value) {
+    return `₩${Math.round(value).toLocaleString('ko-KR')}`;
   }
 
 }

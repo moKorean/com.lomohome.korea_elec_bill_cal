@@ -5,13 +5,16 @@
   },
   "class": "sensor",
   "capabilities": [
-    "meter_power",
-    "meter_kwh_this_month",
-    "meter_kwh_this_year",
     "meter_money_this_month",
-    "meter_money_this_year",
+    "meter_kwh_this_month",
+    "kwh_step",
     "meter_tariff",
-    "kwh_step"
+    "meter_kwh_last_hour",
+    "meter_kwh_last_day",
+    "meter_kwh_last_month",
+    "meter_kwh_this_year",
+    "meter_money_this_year",
+    "meter_power"
   ],
   "capabilitiesOptions": {
     "meter_power": {
@@ -41,25 +44,47 @@
       },
       "decimals": 1
     },
+    "meter_kwh_last_hour": {
+      "title": {
+        "en": "Last Hour",
+        "ko": "지난 시간"
+      },
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 2
+    },
+    "meter_kwh_last_day": {
+      "title": {
+        "en": "Yesterday",
+        "ko": "어제"
+      },
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 1
+    },
+    "meter_kwh_last_month": {
+      "title": {
+        "en": "Last Month",
+        "ko": "지난달"
+      },
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 1
+    },
     "meter_money_this_month": {
       "title": {
         "en": "This Month Cost",
         "ko": "이번달 예상 요금"
-      },
-      "units": {
-        "en": "₩"
-      },
-      "decimals": 0
+      }
     },
     "meter_money_this_year": {
       "title": {
         "en": "This Year Cost",
         "ko": "올해 누적 요금"
-      },
-      "units": {
-        "en": "₩"
-      },
-      "decimals": 0
+      }
     },
     "meter_tariff": {
       "title": {
@@ -91,7 +116,15 @@
         "next": "add_devices"
       },
       "options": {
-        "singular": true
+        "singular": true,
+        "title": {
+          "en": "Select a device",
+          "ko": "기기 선택"
+        },
+        "subtitle": {
+          "en": "Select the device to measure electricity usage",
+          "ko": "전력 사용량을 측정할 기기를 선택해주세요"
+        }
       }
     },
     {
@@ -281,6 +314,20 @@
         "ko": "미터 값"
       },
       "children": [
+        {
+          "id": "meter_total_start",
+          "type": "number",
+          "label": {
+            "en": "Total Meter Offset (kWh)",
+            "ko": "총 사용량 시작값 (kWh)"
+          },
+          "hint": {
+            "en": "Offset to add to source device meter value. Default 0 uses source value as-is.",
+            "ko": "측정 센서 값에 더할 오프셋. 기본값 0은 센서 값을 그대로 사용."
+          },
+          "value": 0,
+          "decimals": 2
+        },
         {
           "id": "meter_month_start",
           "type": "number",

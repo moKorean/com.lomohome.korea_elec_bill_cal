@@ -1,0 +1,16 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Last Month",
+    "ko": "지난달"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/kwh_m.svg",
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "units": {
+    "en": "kWh"
+  },
+  "decimals": 1
+}
