@@ -156,11 +156,15 @@
         "meter_kwh_this_month",
         "kwh_step",
         "meter_tariff",
+        "meter_kwh_this_hour",
         "meter_kwh_last_hour",
         "meter_kwh_last_day",
         "meter_kwh_last_month",
+        "meter_money_last_month",
         "meter_kwh_this_year",
         "meter_money_this_year",
+        "meter_kwh_forecast",
+        "meter_money_forecast",
         "meter_power"
       ],
       "capabilitiesOptions": {
@@ -191,10 +195,20 @@
           },
           "decimals": 1
         },
+        "meter_kwh_this_hour": {
+          "title": {
+            "en": "This Hour Usage",
+            "ko": "이번 시간 사용"
+          },
+          "units": {
+            "en": "kWh"
+          },
+          "decimals": 2
+        },
         "meter_kwh_last_hour": {
           "title": {
-            "en": "Last Hour",
-            "ko": "지난 시간"
+            "en": "Last Hour Usage",
+            "ko": "지난 시간 사용"
           },
           "units": {
             "en": "kWh"
@@ -203,8 +217,8 @@
         },
         "meter_kwh_last_day": {
           "title": {
-            "en": "Yesterday",
-            "ko": "어제"
+            "en": "Yesterday Usage",
+            "ko": "어제 사용"
           },
           "units": {
             "en": "kWh"
@@ -213,8 +227,8 @@
         },
         "meter_kwh_last_month": {
           "title": {
-            "en": "Last Month",
-            "ko": "지난달"
+            "en": "Last Month Usage",
+            "ko": "지난달 사용"
           },
           "units": {
             "en": "kWh"
@@ -249,6 +263,28 @@
             "ko": "누진 단계"
           },
           "decimals": 0
+        },
+        "meter_money_last_month": {
+          "title": {
+            "en": "Last Month Cost",
+            "ko": "지난달 요금"
+          }
+        },
+        "meter_kwh_forecast": {
+          "title": {
+            "en": "Forecast Usage",
+            "ko": "예상 사용량"
+          },
+          "units": {
+            "en": "kWh"
+          },
+          "decimals": 1
+        },
+        "meter_money_forecast": {
+          "title": {
+            "en": "Forecast Cost",
+            "ko": "예상 요금"
+          }
         }
       },
       "images": {
@@ -479,8 +515,12 @@
               "id": "meter_month_start",
               "type": "number",
               "label": {
-                "en": "Month Start (kWh)",
-                "ko": "월초 미터값 (kWh)"
+                "en": "Month Start / Meter Reading Day (kWh)",
+                "ko": "월초(검침일) 미터값 (kWh)"
+              },
+              "hint": {
+                "en": "Meter value at the start of billing period (meter reading day)",
+                "ko": "검침일 기준 미터값"
               },
               "value": 0,
               "decimals": 2
@@ -518,6 +558,22 @@
       "min": 1,
       "max": 4,
       "decimals": 0
+    },
+    "meter_kwh_forecast": {
+      "type": "number",
+      "title": {
+        "en": "Forecast Usage",
+        "ko": "예상 사용량"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/meter_kwh_forecast.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 1
     },
     "meter_kwh_last_day": {
       "type": "number",
@@ -566,6 +622,22 @@
         "en": "kWh"
       },
       "decimals": 1
+    },
+    "meter_kwh_this_hour": {
+      "type": "number",
+      "title": {
+        "en": "This Hour Usage",
+        "ko": "이번 시간 사용"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/kwh_h.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 2
     },
     "meter_kwh_this_month": {
       "type": "number",
@@ -620,6 +692,30 @@
         "en": "kWh"
       },
       "decimals": 4
+    },
+    "meter_money_forecast": {
+      "type": "string",
+      "title": {
+        "en": "Forecast Cost",
+        "ko": "예상 요금"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/money_m.svg",
+      "getable": true,
+      "setable": false,
+      "insights": false
+    },
+    "meter_money_last_month": {
+      "type": "string",
+      "title": {
+        "en": "Last Month Cost",
+        "ko": "지난달 요금"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/money_m.svg",
+      "getable": true,
+      "setable": false,
+      "insights": false
     },
     "meter_money_this_month": {
       "type": "string",

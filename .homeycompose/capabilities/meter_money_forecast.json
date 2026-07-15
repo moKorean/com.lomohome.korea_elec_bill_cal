@@ -1,0 +1,12 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Forecast Cost",
+    "ko": "예상 요금"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/money_m.svg",
+  "getable": true,
+  "setable": false,
+  "insights": false
+}

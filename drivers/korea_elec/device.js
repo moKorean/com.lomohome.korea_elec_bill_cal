@@ -53,8 +53,8 @@ class KoreaElecDevice extends Device {
     this.monthStartMeter = this.settings.meter_month_start || 0;
     this.yearStartMeter = this.settings.meter_year_start || 0;
 
-    // Restore last reading times
-    this.lastReadingMonth = await this.getStoreValue('lastReadingMonth') || { month: new Date().getMonth() };
+    // Restore last reading times (billing period based on check_day)
+    this.lastBillingPeriod = await this.getStoreValue('lastBillingPeriod') || this.getCurrentBillingPeriod();
     this.lastReadingYear = await this.getStoreValue('lastReadingYear') || { year: new Date().getFullYear() };
 
     // Restore accumulated year bill (sum of completed months)
@@ -70,6 +70,7 @@ class KoreaElecDevice extends Device {
     this.lastHourUsage = await this.getStoreValue('lastHourUsage') || 0;
     this.lastDayUsage = await this.getStoreValue('lastDayUsage') || 0;
     this.lastMonthUsage = await this.getStoreValue('lastMonthUsage') || 0;
+    this.lastMonthBill = await this.getStoreValue('lastMonthBill') || 0;
 
     // Store current bill and step for flow triggers
     this.currentMonthBill = 0;
@@ -107,7 +108,38 @@ class KoreaElecDevice extends Device {
 
         // Initial update
         if (this.sourceDevice.capabilitiesObj && this.sourceDevice.capabilitiesObj.meter_power) {
-          await this.updateMeter(this.sourceDevice.capabilitiesObj.meter_power.value);
+          const initialValue = this.sourceDevice.capabilitiesObj.meter_power.value;
+
+          // Check if this is first time setup (all start values are 0)
+          const isFirstSetup = this.hourStartMeter === 0
+            && this.dayStartMeter === 0
+            && this.monthStartMeter === 0
+            && this.yearStartMeter === 0;
+
+          if (isFirstSetup && initialValue > 0) {
+            this.log('First setup detected, initializing start values with current meter value');
+            const currentMeter = initialValue + this.meterTotalStart;
+
+            // Set all start values to current meter value
+            this.hourStartMeter = currentMeter;
+            this.dayStartMeter = currentMeter;
+            this.monthStartMeter = currentMeter;
+            this.yearStartMeter = currentMeter;
+            this.lastMeterValue = currentMeter;
+            this.lastBillingPeriod = this.getCurrentBillingPeriod();
+
+            // Persist values
+            await this.setStoreValue('hourStartMeter', this.hourStartMeter);
+            await this.setStoreValue('dayStartMeter', this.dayStartMeter);
+            await this.setStoreValue('lastMeterValue', this.lastMeterValue);
+            await this.setStoreValue('lastBillingPeriod', this.lastBillingPeriod);
+            await this.setSettings({
+              meter_month_start: this.monthStartMeter,
+              meter_year_start: this.yearStartMeter,
+            }).catch(this.error);
+          }
+
+          await this.updateMeter(initialValue);
         }
       }
     } catch (error) {
@@ -164,9 +196,11 @@ class KoreaElecDevice extends Device {
       await this.setSettings({ meter_year_start: this.yearStartMeter }).catch(this.error);
     }
 
-    // Check for new month
-    if (nowLocal.getMonth() !== this.lastReadingMonth.month) {
-      this.log('New month detected');
+    // Check for new billing period (based on check_day / meter reading day)
+    const currentBillingPeriod = this.getCurrentBillingPeriod();
+    if (currentBillingPeriod.year !== this.lastBillingPeriod.year
+        || currentBillingPeriod.month !== this.lastBillingPeriod.month) {
+      this.log(`New billing period detected: ${this.lastBillingPeriod.year}/${this.lastBillingPeriod.month + 1} -> ${currentBillingPeriod.year}/${currentBillingPeriod.month + 1}`);
 
       // Save last month usage
       this.lastMonthUsage = Math.max(0, this.lastMeterValue - this.monthStartMeter);
@@ -174,15 +208,17 @@ class KoreaElecDevice extends Device {
 
       // Calculate and save last month's bill before resetting
       if (this.lastMonthUsage > 0) {
-        const lastMonthBill = this.calculator.getSimpleBill(this.lastMonthUsage);
-        this.yearAccumulatedBill += lastMonthBill.total;
+        const lastMonthBillResult = this.calculator.getSimpleBill(this.lastMonthUsage);
+        this.lastMonthBill = lastMonthBillResult.total;
+        await this.setStoreValue('lastMonthBill', this.lastMonthBill);
+        this.yearAccumulatedBill += lastMonthBillResult.total;
         await this.setStoreValue('yearAccumulatedBill', this.yearAccumulatedBill);
-        this.log(`Added last month bill: ${lastMonthBill.total}, Year total: ${this.yearAccumulatedBill}`);
+        this.log(`Added last month bill: ${lastMonthBillResult.total}, Year total: ${this.yearAccumulatedBill}`);
       }
 
       this.monthStartMeter = this.lastMeterValue;
-      this.lastReadingMonth = { month: nowLocal.getMonth() };
-      await this.setStoreValue('lastReadingMonth', this.lastReadingMonth);
+      this.lastBillingPeriod = currentBillingPeriod;
+      await this.setStoreValue('lastBillingPeriod', this.lastBillingPeriod);
       await this.setSettings({ meter_month_start: this.monthStartMeter }).catch(this.error);
     }
 
@@ -199,9 +235,12 @@ class KoreaElecDevice extends Device {
       await this.setCapabilityValue('meter_power', meterValue).catch(this.error);
       await this.setCapabilityValue('meter_kwh_this_month', Math.round(monthUsage * 10) / 10).catch(this.error);
       await this.setCapabilityValue('meter_kwh_this_year', Math.round(yearUsage * 10) / 10).catch(this.error);
+      const thisHourUsage = Math.max(0, meterValue - this.hourStartMeter);
+      await this.setCapabilityValue('meter_kwh_this_hour', Math.round(thisHourUsage * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_kwh_last_hour', Math.round(this.lastHourUsage * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_kwh_last_day', Math.round(this.lastDayUsage * 10) / 10).catch(this.error);
       await this.setCapabilityValue('meter_kwh_last_month', Math.round(this.lastMonthUsage * 10) / 10).catch(this.error);
+      await this.setCapabilityValue('meter_money_last_month', this.formatMoney(this.lastMonthBill)).catch(this.error);
       await this.setCapabilityValue('meter_money_this_month', this.formatMoney(billResult.total)).catch(this.error);
 
       // Check for step change and trigger flow
@@ -231,6 +270,11 @@ class KoreaElecDevice extends Device {
       const yearTotalBill = this.yearAccumulatedBill + billResult.total;
       await this.setCapabilityValue('meter_money_this_year', this.formatMoney(yearTotalBill)).catch(this.error);
 
+      // Calculate forecast (예상 사용량/요금)
+      const forecast = this.calculateForecast(monthUsage, nowLocal);
+      await this.setCapabilityValue('meter_kwh_forecast', Math.round(forecast.kwhForecast * 10) / 10).catch(this.error);
+      await this.setCapabilityValue('meter_money_forecast', this.formatMoney(forecast.moneyForecast)).catch(this.error);
+
     } catch (error) {
       this.error('Failed to calculate bill:', error);
     }
@@ -242,6 +286,27 @@ class KoreaElecDevice extends Device {
 
   async onSettings({ oldSettings, newSettings, changedKeys }) {
     this.log('Settings changed:', changedKeys);
+
+    // Validate meter start values: current >= month >= year
+    const currentMeter = this.lastMeterValue || 0;
+    let yearStart = newSettings.meter_year_start;
+    let monthStart = newSettings.meter_month_start;
+
+    // Validation: year_start should be <= month_start <= current meter
+    if (changedKeys.includes('meter_year_start') || changedKeys.includes('meter_month_start')) {
+      // Year start cannot be greater than month start
+      if (yearStart > monthStart) {
+        throw new Error(this.homey.__('error_year_greater_than_month') || 'Year start cannot be greater than month start');
+      }
+      // Month start cannot be greater than current meter
+      if (monthStart > currentMeter && currentMeter > 0) {
+        throw new Error(this.homey.__('error_month_greater_than_current') || 'Month start cannot be greater than current meter value');
+      }
+      // Year start cannot be greater than current meter
+      if (yearStart > currentMeter && currentMeter > 0) {
+        throw new Error(this.homey.__('error_year_greater_than_current') || 'Year start cannot be greater than current meter value');
+      }
+    }
 
     // Update settings
     this.settings = newSettings;
@@ -255,6 +320,15 @@ class KoreaElecDevice extends Device {
     }
     if (changedKeys.includes('meter_month_start')) {
       this.monthStartMeter = newSettings.meter_month_start;
+      // Also update hour/day start if they're lower than month start
+      if (this.hourStartMeter < this.monthStartMeter) {
+        this.hourStartMeter = this.monthStartMeter;
+        await this.setStoreValue('hourStartMeter', this.hourStartMeter);
+      }
+      if (this.dayStartMeter < this.monthStartMeter) {
+        this.dayStartMeter = this.monthStartMeter;
+        await this.setStoreValue('dayStartMeter', this.dayStartMeter);
+      }
     }
     if (changedKeys.includes('meter_year_start')) {
       this.yearStartMeter = newSettings.meter_year_start;
@@ -270,7 +344,7 @@ class KoreaElecDevice extends Device {
 
     // Recalculate with current meter value
     if (this.lastMeterValue > 0) {
-      await this.updateMeter(this.lastMeterValue);
+      await this.updateMeter(this.lastMeterValue - this.meterTotalStart);
     }
   }
 
@@ -283,6 +357,90 @@ class KoreaElecDevice extends Device {
 
   formatMoney(value) {
     return `₩${Math.round(value).toLocaleString('ko-KR')}`;
+  }
+
+  /**
+   * Calculate forecast usage and cost for the billing period
+   * Based on current usage rate, extrapolate to end of billing period
+   */
+  calculateForecast(currentMonthUsage, nowLocal) {
+    const checkDay = this.settings.check_day || 1;
+
+    // Calculate billing period start and end dates
+    let periodStart;
+    let periodEnd;
+
+    if (checkDay === 0) {
+      // Last day of month: period is 1st to last day
+      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), 1);
+      periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth() + 1, 0);
+    } else {
+      // Period starts on check_day
+      if (nowLocal.getDate() >= checkDay) {
+        // Current month's check_day to next month's check_day - 1
+        periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay);
+        periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth() + 1, checkDay - 1);
+      } else {
+        // Previous month's check_day to current month's check_day - 1
+        periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth() - 1, checkDay);
+        periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay - 1);
+      }
+    }
+
+    // Calculate days in period and days elapsed
+    const totalDays = Math.ceil((periodEnd - periodStart) / (1000 * 60 * 60 * 24)) + 1;
+    const elapsedDays = Math.ceil((nowLocal - periodStart) / (1000 * 60 * 60 * 24));
+
+    // Avoid division by zero
+    if (elapsedDays <= 0) {
+      return { kwhForecast: currentMonthUsage, moneyForecast: 0 };
+    }
+
+    // Calculate daily average and forecast
+    const dailyAverage = currentMonthUsage / elapsedDays;
+    const kwhForecast = dailyAverage * totalDays;
+
+    // Calculate forecast bill using the calculator
+    let moneyForecast = 0;
+    try {
+      const forecastBill = this.calculator.getSimpleBill(kwhForecast);
+      moneyForecast = forecastBill.total;
+    } catch (error) {
+      this.error('Failed to calculate forecast bill:', error);
+    }
+
+    return { kwhForecast, moneyForecast };
+  }
+
+  /**
+   * Get current billing period based on check_day (meter reading day)
+   * Returns { year, month } where month changes on check_day
+   * Example: check_day=15, today=July 10 -> billing period is June
+   *          check_day=15, today=July 20 -> billing period is July
+   */
+  getCurrentBillingPeriod(date = new Date()) {
+    const checkDay = this.settings.check_day || 1;
+    const localDate = new Date(date.toLocaleString('en-US', { timeZone: this.timeZone }));
+
+    let year = localDate.getFullYear();
+    let month = localDate.getMonth();
+    const day = localDate.getDate();
+
+    // If check_day is 0, it means last day of month
+    // If current day is before check_day, we're still in previous billing period
+    if (checkDay === 0) {
+      // Last day of month: billing period changes on 1st
+      // So if today is any day, billing period is current month
+    } else if (day < checkDay) {
+      // Before check_day: still in previous month's billing period
+      month -= 1;
+      if (month < 0) {
+        month = 11;
+        year -= 1;
+      }
+    }
+
+    return { year, month };
   }
 
 }

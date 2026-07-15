@@ -1,0 +1,16 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Forecast Usage",
+    "ko": "예상 사용량"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/meter_kwh_forecast.svg",
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "units": {
+    "en": "kWh"
+  },
+  "decimals": 1
+}

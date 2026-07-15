@@ -1,0 +1,12 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Last Month Cost",
+    "ko": "지난달 요금"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/money_m.svg",
+  "getable": true,
+  "setable": false,
+  "insights": false
+}

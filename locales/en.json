@@ -1,5 +1,8 @@
 {
   "source_device_missing_retry": "Source device is missing. Retry in 10 minutes.",
   "error_device_not_ready": "Device is not ready. Ignoring new settings!",
-  "error_homey_api_not_ready": "Homey API not ready"
+  "error_homey_api_not_ready": "Homey API not ready",
+  "error_year_greater_than_month": "Year start cannot be greater than month start",
+  "error_month_greater_than_current": "Month start cannot be greater than current meter value",
+  "error_year_greater_than_current": "Year start cannot be greater than current meter value"
 }
