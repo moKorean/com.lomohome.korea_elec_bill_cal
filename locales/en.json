@@ -1,0 +1,5 @@
+{
+  "source_device_missing_retry": "Source device is missing. Retry in 10 minutes.",
+  "error_device_not_ready": "Device is not ready. Ignoring new settings!",
+  "error_homey_api_not_ready": "Homey API not ready"
+}

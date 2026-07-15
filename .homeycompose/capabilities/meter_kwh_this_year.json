@@ -1,0 +1,27 @@
+{
+  "type": "number",
+  "title": {
+    "en": "kWh this year",
+    "de": "kWh dieses Jahr",
+    "sv": "kWh i år",
+    "it": "kWh anno corrente",
+    "no": "kWh dette år",
+    "fr": "KWh cette année",
+    "da": "KWh i år",
+    "nl": "kWh dit jaar",
+    "ar": "كيلوواط ساعة هذا العام",
+    "es": "kWh this year",
+    "pl": "kWh this year",
+    "ru": "kWh this year",
+    "ko": "kWh this year"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/kwh_y.svg",
+  "getable": true,
+  "setable": false,
+  "insights": true,
+  "units": {
+    "en": "kWh"
+  },
+  "decimals": 4
+}

@@ -1,0 +1,35 @@
+{
+  "name": "com.lomohome.korea_elec_bill_cal",
+  "version": "1.0.0",
+  "description": "Calculate Korean electricity bills based on KEPCO progressive rate system",
+  "main": "app.js",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "homey",
+    "korea",
+    "kepco",
+    "electricity",
+    "bill"
+  ],
+  "author": "LomoHome <mokorean@gmail.com>",
+  "license": "GPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mokorean/com.lomohome.korea_elec_bill_cal.git"
+  },
+  "dependencies": {
+    "homey-api": "^3.19.1"
+  },
+  "devDependencies": {
+    "@types/homey": "npm:homey-apps-sdk-v3-types@^0.3.12",
+    "eslint": "^7.32.0",
+    "eslint-config-athom": "^3.1.5",
+    "eslint-plugin-homey-app": "^1.0.2"
+  }
+}

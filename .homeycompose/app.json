@@ -1,0 +1,70 @@
+{
+  "id": "com.lomohome.korea_elec_bill_cal",
+  "version": "1.0.0",
+  "compatibility": ">=12.9.0",
+  "brandColor": "#0066cc",
+  "sdk": 3,
+  "name": {
+    "en": "Korea Electricity Bill Calculator",
+    "ko": "한국 전력 요금 계산기"
+  },
+  "description": {
+    "en": "Calculate Korean electricity bills based on KEPCO progressive rate system. Track usage and estimate monthly costs.",
+    "ko": "한국전력(KEPCO) 누진제 요금 체계를 기반으로 전기 요금을 계산합니다. 사용량을 추적하고 월별 예상 요금을 확인하세요."
+  },
+  "category": "energy",
+  "tags": {
+    "en": [
+      "KEPCO",
+      "Korea",
+      "electricity",
+      "bill",
+      "calculator",
+      "progressive rate",
+      "energy",
+      "power",
+      "utility bill",
+      "cost",
+      "tariff",
+      "pricing"
+    ],
+    "ko": [
+      "한국전력",
+      "전기요금",
+      "누진제",
+      "전력",
+      "에너지",
+      "요금계산",
+      "KEPCO"
+    ]
+  },
+  "permissions": [
+    "homey:manager:api",
+    "homey:manager:geolocation"
+  ],
+  "images": {
+    "large": "/assets/images/large.jpg",
+    "small": "/assets/images/small.jpg"
+  },
+  "author": {
+    "name": "LomoHome",
+    "email": "mokorean@gmail.com"
+  },
+  "copyright": "LomoHome (mokorean@gmail.com)",
+  "license": "GPL-3.0-or-later",
+  "contributors": {
+    "developers": [
+      {
+        "name": "LomoHome",
+        "email": "mokorean@gmail.com"
+      }
+    ]
+  },
+  "bugs": {
+    "url": "https://github.com/mokorean/com.lomohome.korea_elec_bill_cal/issues"
+  },
+  "platforms": [
+    "local"
+  ],
+  "source": "https://github.com/mokorean/com.lomohome.korea_elec_bill_cal"
+}

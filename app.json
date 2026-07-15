@@ -1,0 +1,535 @@
+{
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "com.lomohome.korea_elec_bill_cal",
+  "version": "1.0.0",
+  "compatibility": ">=12.9.0",
+  "brandColor": "#0066cc",
+  "sdk": 3,
+  "name": {
+    "en": "Korea Electricity Bill Calculator",
+    "ko": "한국 전력 요금 계산기"
+  },
+  "description": {
+    "en": "Calculate Korean electricity bills based on KEPCO progressive rate system. Track usage and estimate monthly costs.",
+    "ko": "한국전력(KEPCO) 누진제 요금 체계를 기반으로 전기 요금을 계산합니다. 사용량을 추적하고 월별 예상 요금을 확인하세요."
+  },
+  "category": "energy",
+  "tags": {
+    "en": [
+      "KEPCO",
+      "Korea",
+      "electricity",
+      "bill",
+      "calculator",
+      "progressive rate",
+      "energy",
+      "power",
+      "utility bill",
+      "cost",
+      "tariff",
+      "pricing"
+    ],
+    "ko": [
+      "한국전력",
+      "전기요금",
+      "누진제",
+      "전력",
+      "에너지",
+      "요금계산",
+      "KEPCO"
+    ]
+  },
+  "permissions": [
+    "homey:manager:api",
+    "homey:manager:geolocation"
+  ],
+  "images": {
+    "large": "/assets/images/large.jpg",
+    "small": "/assets/images/small.jpg"
+  },
+  "author": {
+    "name": "LomoHome",
+    "email": "mokorean@gmail.com"
+  },
+  "copyright": "LomoHome (mokorean@gmail.com)",
+  "license": "GPL-3.0-or-later",
+  "contributors": {
+    "developers": [
+      {
+        "name": "LomoHome",
+        "email": "mokorean@gmail.com"
+      }
+    ]
+  },
+  "bugs": {
+    "url": "https://github.com/mokorean/com.lomohome.korea_elec_bill_cal/issues"
+  },
+  "platforms": [
+    "local"
+  ],
+  "source": "https://github.com/mokorean/com.lomohome.korea_elec_bill_cal",
+  "drivers": [
+    {
+      "name": {
+        "en": "Korea Electricity Meter",
+        "ko": "한국 전력 요금 계산기"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "meter_power",
+        "meter_kwh_this_month",
+        "meter_kwh_this_year",
+        "meter_money_this_month",
+        "meter_money_this_year",
+        "meter_tariff",
+        "kwh_step"
+      ],
+      "capabilitiesOptions": {
+        "meter_power": {
+          "title": {
+            "en": "Total Energy",
+            "ko": "총 사용량"
+          },
+          "decimals": 2
+        },
+        "meter_kwh_this_month": {
+          "title": {
+            "en": "This Month",
+            "ko": "이번달 사용량"
+          },
+          "units": {
+            "en": "kWh"
+          },
+          "decimals": 1
+        },
+        "meter_kwh_this_year": {
+          "title": {
+            "en": "This Year",
+            "ko": "올해 사용량"
+          },
+          "units": {
+            "en": "kWh"
+          },
+          "decimals": 1
+        },
+        "meter_money_this_month": {
+          "title": {
+            "en": "This Month Cost",
+            "ko": "이번달 예상 요금"
+          },
+          "units": {
+            "en": "₩"
+          },
+          "decimals": 0
+        },
+        "meter_money_this_year": {
+          "title": {
+            "en": "This Year Cost",
+            "ko": "올해 누적 요금"
+          },
+          "units": {
+            "en": "₩"
+          },
+          "decimals": 0
+        },
+        "meter_tariff": {
+          "title": {
+            "en": "Current Rate",
+            "ko": "현재 단가"
+          },
+          "units": {
+            "en": "₩/kWh"
+          },
+          "decimals": 1
+        },
+        "kwh_step": {
+          "title": {
+            "en": "Progressive Step",
+            "ko": "누진 단계"
+          },
+          "decimals": 0
+        }
+      },
+      "images": {
+        "large": "./assets/images/large.jpg",
+        "small": "./assets/images/small.jpg"
+      },
+      "pair": [
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          },
+          "options": {
+            "singular": true
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Source Device",
+            "ko": "소스 디바이스"
+          },
+          "children": [
+            {
+              "id": "homey_device_id",
+              "type": "label",
+              "label": {
+                "en": "Device ID",
+                "ko": "디바이스 ID"
+              },
+              "value": ""
+            },
+            {
+              "id": "homey_device_name",
+              "type": "label",
+              "label": {
+                "en": "Device Name",
+                "ko": "디바이스 이름"
+              },
+              "value": ""
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "KEPCO Settings",
+            "ko": "한전 설정"
+          },
+          "children": [
+            {
+              "id": "check_day",
+              "type": "number",
+              "label": {
+                "en": "Meter Reading Day",
+                "ko": "검침일"
+              },
+              "hint": {
+                "en": "Day of month when meter is read (1-31, 0 for last day)",
+                "ko": "검침일 (1-31, 0은 말일)"
+              },
+              "value": 1,
+              "min": 0,
+              "max": 31
+            },
+            {
+              "id": "pressure",
+              "type": "dropdown",
+              "label": {
+                "en": "Voltage Type",
+                "ko": "전압 구분"
+              },
+              "hint": {
+                "en": "Low voltage (most residential) or High voltage",
+                "ko": "저압(일반 가정) 또는 고압"
+              },
+              "value": "low",
+              "values": [
+                {
+                  "id": "low",
+                  "label": {
+                    "en": "Low Voltage (Residential)",
+                    "ko": "저압 (주거용)"
+                  }
+                },
+                {
+                  "id": "high",
+                  "label": {
+                    "en": "High Voltage",
+                    "ko": "고압"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Discount Settings",
+            "ko": "할인 설정"
+          },
+          "children": [
+            {
+              "id": "bigfam_dc",
+              "type": "dropdown",
+              "label": {
+                "en": "Large Family Discount",
+                "ko": "대가족 할인"
+              },
+              "value": "0",
+              "values": [
+                {
+                  "id": "0",
+                  "label": {
+                    "en": "None",
+                    "ko": "없음"
+                  }
+                },
+                {
+                  "id": "1",
+                  "label": {
+                    "en": "5+ members / Newborn / 3+ children",
+                    "ko": "5인 이상 / 출산가구 / 3자녀 이상"
+                  }
+                },
+                {
+                  "id": "2",
+                  "label": {
+                    "en": "Life Support Equipment",
+                    "ko": "생명유지장치"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "welfare_dc",
+              "type": "dropdown",
+              "label": {
+                "en": "Welfare Discount",
+                "ko": "복지 할인"
+              },
+              "value": "0",
+              "values": [
+                {
+                  "id": "0",
+                  "label": {
+                    "en": "None",
+                    "ko": "없음"
+                  }
+                },
+                {
+                  "id": "1",
+                  "label": {
+                    "en": "Veterans / Disabled",
+                    "ko": "유공자 / 장애인"
+                  }
+                },
+                {
+                  "id": "2",
+                  "label": {
+                    "en": "Social Welfare Facility",
+                    "ko": "사회복지시설"
+                  }
+                },
+                {
+                  "id": "3",
+                  "label": {
+                    "en": "Basic Livelihood (Living/Medical)",
+                    "ko": "기초생활 (생계/의료)"
+                  }
+                },
+                {
+                  "id": "4",
+                  "label": {
+                    "en": "Basic Livelihood (Housing/Education)",
+                    "ko": "기초생활 (주거/교육)"
+                  }
+                },
+                {
+                  "id": "5",
+                  "label": {
+                    "en": "Near-poverty",
+                    "ko": "차상위계층"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Meter Values",
+            "ko": "미터 값"
+          },
+          "children": [
+            {
+              "id": "meter_month_start",
+              "type": "number",
+              "label": {
+                "en": "Month Start (kWh)",
+                "ko": "월초 미터값 (kWh)"
+              },
+              "value": 0,
+              "decimals": 2
+            },
+            {
+              "id": "meter_year_start",
+              "type": "number",
+              "label": {
+                "en": "Year Start (kWh)",
+                "ko": "연초 미터값 (kWh)"
+              },
+              "value": 0,
+              "decimals": 2
+            }
+          ]
+        }
+      ],
+      "id": "korea_elec"
+    }
+  ],
+  "capabilities": {
+    "kwh_step": {
+      "type": "number",
+      "title": {
+        "en": "Progressive Step",
+        "ko": "누진 단계"
+      },
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "icon": "/assets/icons/step.svg",
+      "units": {
+        "en": ""
+      },
+      "min": 1,
+      "max": 4,
+      "decimals": 0
+    },
+    "meter_kwh_this_month": {
+      "type": "number",
+      "title": {
+        "en": "kWh this month",
+        "de": "kWh dieser Monat",
+        "sv": "kWh denna månad",
+        "it": "kWh mese corrente",
+        "no": "kWh denne måned",
+        "fr": "KWh ce mois ci",
+        "da": "KWh denne måned",
+        "nl": "kWh deze maand",
+        "es": "kWh este mes",
+        "pl": "kWh ten miesiąc",
+        "ru": "кВтч этот месяц",
+        "ko": "이번 달 kWh",
+        "ar": "كيلوواط ساعة هذا الشهر"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/kwh_m.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 4
+    },
+    "meter_kwh_this_year": {
+      "type": "number",
+      "title": {
+        "en": "kWh this year",
+        "de": "kWh dieses Jahr",
+        "sv": "kWh i år",
+        "it": "kWh anno corrente",
+        "no": "kWh dette år",
+        "fr": "KWh cette année",
+        "da": "KWh i år",
+        "nl": "kWh dit jaar",
+        "ar": "كيلوواط ساعة هذا العام",
+        "es": "kWh this year",
+        "pl": "kWh this year",
+        "ru": "kWh this year",
+        "ko": "kWh this year"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/kwh_y.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 4
+    },
+    "meter_money_this_month": {
+      "type": "number",
+      "title": {
+        "en": "Money this month",
+        "de": "Kosten dieser Monat",
+        "sv": "Pengar denna månad",
+        "it": "Spesa mese corrente",
+        "no": "Kostnad denne måned",
+        "fr": "Argent ce mois ci",
+        "da": "Penge denne måned",
+        "nl": "Geld deze maand",
+        "es": "Money this month",
+        "pl": "Money this month",
+        "ru": "Money this month",
+        "ko": "Money this month",
+        "ar": "Money this month"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/money_m.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "¤"
+      },
+      "decimals": 2
+    },
+    "meter_money_this_year": {
+      "type": "number",
+      "title": {
+        "en": "Money this year",
+        "de": "Kosten dieses Jahr",
+        "sv": "Pengar i år",
+        "it": "Spesa anno corrente",
+        "no": "Kostnad dette året",
+        "fr": "Argent cette année",
+        "da": "Penge i år",
+        "nl": "Geld dit jaar",
+        "ar": "التكلفة هذا العام",
+        "es": "Money this year",
+        "pl": "Money this year",
+        "ru": "Money this year",
+        "ko": "Money this year"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/money_y.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "¤"
+      },
+      "decimals": 2
+    },
+    "meter_tariff": {
+      "type": "number",
+      "title": {
+        "en": "Active tariff",
+        "de": "Aktiver Tarif",
+        "sv": "Aktiv tariff",
+        "it": "Tariffa attiva",
+        "no": "Aktiv tariff",
+        "fr": "Tarif actif",
+        "da": "Aktuel afgift",
+        "nl": "Actief tarief",
+        "es": "Tarifa activa",
+        "pl": "Aktywna taryfa",
+        "ru": "Активный тариф",
+        "ko": "활성 요금제",
+        "ar": "التعريفة النشطة"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/tariff.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "¤"
+      },
+      "decimals": 4
+    }
+  }
+}

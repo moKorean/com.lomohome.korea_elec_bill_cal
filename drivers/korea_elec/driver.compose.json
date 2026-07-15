@@ -1,0 +1,307 @@
+{
+  "name": {
+    "en": "Korea Electricity Meter",
+    "ko": "한국 전력 요금 계산기"
+  },
+  "class": "sensor",
+  "capabilities": [
+    "meter_power",
+    "meter_kwh_this_month",
+    "meter_kwh_this_year",
+    "meter_money_this_month",
+    "meter_money_this_year",
+    "meter_tariff",
+    "kwh_step"
+  ],
+  "capabilitiesOptions": {
+    "meter_power": {
+      "title": {
+        "en": "Total Energy",
+        "ko": "총 사용량"
+      },
+      "decimals": 2
+    },
+    "meter_kwh_this_month": {
+      "title": {
+        "en": "This Month",
+        "ko": "이번달 사용량"
+      },
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 1
+    },
+    "meter_kwh_this_year": {
+      "title": {
+        "en": "This Year",
+        "ko": "올해 사용량"
+      },
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 1
+    },
+    "meter_money_this_month": {
+      "title": {
+        "en": "This Month Cost",
+        "ko": "이번달 예상 요금"
+      },
+      "units": {
+        "en": "₩"
+      },
+      "decimals": 0
+    },
+    "meter_money_this_year": {
+      "title": {
+        "en": "This Year Cost",
+        "ko": "올해 누적 요금"
+      },
+      "units": {
+        "en": "₩"
+      },
+      "decimals": 0
+    },
+    "meter_tariff": {
+      "title": {
+        "en": "Current Rate",
+        "ko": "현재 단가"
+      },
+      "units": {
+        "en": "₩/kWh"
+      },
+      "decimals": 1
+    },
+    "kwh_step": {
+      "title": {
+        "en": "Progressive Step",
+        "ko": "누진 단계"
+      },
+      "decimals": 0
+    }
+  },
+  "images": {
+    "large": "./assets/images/large.jpg",
+    "small": "./assets/images/small.jpg"
+  },
+  "pair": [
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_devices"
+      },
+      "options": {
+        "singular": true
+      }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ],
+  "settings": [
+    {
+      "type": "group",
+      "label": {
+        "en": "Source Device",
+        "ko": "소스 디바이스"
+      },
+      "children": [
+        {
+          "id": "homey_device_id",
+          "type": "label",
+          "label": {
+            "en": "Device ID",
+            "ko": "디바이스 ID"
+          },
+          "value": ""
+        },
+        {
+          "id": "homey_device_name",
+          "type": "label",
+          "label": {
+            "en": "Device Name",
+            "ko": "디바이스 이름"
+          },
+          "value": ""
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": {
+        "en": "KEPCO Settings",
+        "ko": "한전 설정"
+      },
+      "children": [
+        {
+          "id": "check_day",
+          "type": "number",
+          "label": {
+            "en": "Meter Reading Day",
+            "ko": "검침일"
+          },
+          "hint": {
+            "en": "Day of month when meter is read (1-31, 0 for last day)",
+            "ko": "검침일 (1-31, 0은 말일)"
+          },
+          "value": 1,
+          "min": 0,
+          "max": 31
+        },
+        {
+          "id": "pressure",
+          "type": "dropdown",
+          "label": {
+            "en": "Voltage Type",
+            "ko": "전압 구분"
+          },
+          "hint": {
+            "en": "Low voltage (most residential) or High voltage",
+            "ko": "저압(일반 가정) 또는 고압"
+          },
+          "value": "low",
+          "values": [
+            {
+              "id": "low",
+              "label": {
+                "en": "Low Voltage (Residential)",
+                "ko": "저압 (주거용)"
+              }
+            },
+            {
+              "id": "high",
+              "label": {
+                "en": "High Voltage",
+                "ko": "고압"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": {
+        "en": "Discount Settings",
+        "ko": "할인 설정"
+      },
+      "children": [
+        {
+          "id": "bigfam_dc",
+          "type": "dropdown",
+          "label": {
+            "en": "Large Family Discount",
+            "ko": "대가족 할인"
+          },
+          "value": "0",
+          "values": [
+            {
+              "id": "0",
+              "label": {
+                "en": "None",
+                "ko": "없음"
+              }
+            },
+            {
+              "id": "1",
+              "label": {
+                "en": "5+ members / Newborn / 3+ children",
+                "ko": "5인 이상 / 출산가구 / 3자녀 이상"
+              }
+            },
+            {
+              "id": "2",
+              "label": {
+                "en": "Life Support Equipment",
+                "ko": "생명유지장치"
+              }
+            }
+          ]
+        },
+        {
+          "id": "welfare_dc",
+          "type": "dropdown",
+          "label": {
+            "en": "Welfare Discount",
+            "ko": "복지 할인"
+          },
+          "value": "0",
+          "values": [
+            {
+              "id": "0",
+              "label": {
+                "en": "None",
+                "ko": "없음"
+              }
+            },
+            {
+              "id": "1",
+              "label": {
+                "en": "Veterans / Disabled",
+                "ko": "유공자 / 장애인"
+              }
+            },
+            {
+              "id": "2",
+              "label": {
+                "en": "Social Welfare Facility",
+                "ko": "사회복지시설"
+              }
+            },
+            {
+              "id": "3",
+              "label": {
+                "en": "Basic Livelihood (Living/Medical)",
+                "ko": "기초생활 (생계/의료)"
+              }
+            },
+            {
+              "id": "4",
+              "label": {
+                "en": "Basic Livelihood (Housing/Education)",
+                "ko": "기초생활 (주거/교육)"
+              }
+            },
+            {
+              "id": "5",
+              "label": {
+                "en": "Near-poverty",
+                "ko": "차상위계층"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": {
+        "en": "Meter Values",
+        "ko": "미터 값"
+      },
+      "children": [
+        {
+          "id": "meter_month_start",
+          "type": "number",
+          "label": {
+            "en": "Month Start (kWh)",
+            "ko": "월초 미터값 (kWh)"
+          },
+          "value": 0,
+          "decimals": 2
+        },
+        {
+          "id": "meter_year_start",
+          "type": "number",
+          "label": {
+            "en": "Year Start (kWh)",
+            "ko": "연초 미터값 (kWh)"
+          },
+          "value": 0,
+          "decimals": 2
+        }
+      ]
+    }
+  ]
+}
