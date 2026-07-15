@@ -1,16 +1,16 @@
 {
   "type": "number",
   "title": {
-    "en": "Yesterday",
-    "ko": "어제"
+    "en": "vs Last Month",
+    "ko": "지난달 대비"
   },
   "uiComponent": "sensor",
-  "icon": "/assets/kwh.svg",
+  "icon": "/assets/trending.svg",
   "getable": true,
   "setable": false,
   "insights": true,
   "units": {
-    "en": "kWh"
+    "en": "%"
   },
   "decimals": 1
 }

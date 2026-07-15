@@ -1,8 +1,8 @@
 {
   "type": "number",
   "title": {
-    "en": "Yesterday",
-    "ko": "어제"
+    "en": "Today Usage",
+    "ko": "오늘 사용량"
   },
   "uiComponent": "sensor",
   "icon": "/assets/kwh.svg",
@@ -12,5 +12,5 @@
   "units": {
     "en": "kWh"
   },
-  "decimals": 1
+  "decimals": 2
 }

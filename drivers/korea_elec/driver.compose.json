@@ -11,13 +11,16 @@
     "meter_tariff",
     "meter_kwh_this_hour",
     "meter_kwh_last_hour",
+    "meter_kwh_today",
     "meter_kwh_last_day",
+    "meter_kwh_daily_avg",
+    "meter_month_comparison",
+    "meter_kwh_forecast",
+    "meter_money_forecast",
     "meter_kwh_last_month",
     "meter_money_last_month",
     "meter_kwh_this_year",
     "meter_money_this_year",
-    "meter_kwh_forecast",
-    "meter_money_forecast",
     "meter_power"
   ],
   "capabilitiesOptions": {
@@ -138,6 +141,36 @@
         "en": "Forecast Cost",
         "ko": "예상 요금"
       }
+    },
+    "meter_kwh_today": {
+      "title": {
+        "en": "Today Usage",
+        "ko": "오늘 사용량"
+      },
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 2
+    },
+    "meter_kwh_daily_avg": {
+      "title": {
+        "en": "Daily Average",
+        "ko": "일평균 사용량"
+      },
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 2
+    },
+    "meter_month_comparison": {
+      "title": {
+        "en": "vs Last Month",
+        "ko": "지난달 대비"
+      },
+      "units": {
+        "en": "%"
+      },
+      "decimals": 1
     }
   },
   "images": {

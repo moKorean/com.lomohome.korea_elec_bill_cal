@@ -65,6 +65,7 @@ class KoreaElecDevice extends Device {
     this.lastReadingDay = await this.getStoreValue('lastReadingDay') || { day: new Date().getDate() };
     this.hourStartMeter = await this.getStoreValue('hourStartMeter') || 0;
     this.dayStartMeter = await this.getStoreValue('dayStartMeter') || 0;
+    this.todayStartMeter = await this.getStoreValue('todayStartMeter') || 0;
 
     // Restore last period values
     this.lastHourUsage = await this.getStoreValue('lastHourUsage') || 0;
@@ -123,6 +124,7 @@ class KoreaElecDevice extends Device {
             // Set all start values to current meter value
             this.hourStartMeter = currentMeter;
             this.dayStartMeter = currentMeter;
+            this.todayStartMeter = currentMeter;
             this.monthStartMeter = currentMeter;
             this.yearStartMeter = currentMeter;
             this.lastMeterValue = currentMeter;
@@ -131,6 +133,7 @@ class KoreaElecDevice extends Device {
             // Persist values
             await this.setStoreValue('hourStartMeter', this.hourStartMeter);
             await this.setStoreValue('dayStartMeter', this.dayStartMeter);
+            await this.setStoreValue('todayStartMeter', this.todayStartMeter);
             await this.setStoreValue('lastMeterValue', this.lastMeterValue);
             await this.setStoreValue('lastBillingPeriod', this.lastBillingPeriod);
             await this.setSettings({
@@ -180,9 +183,11 @@ class KoreaElecDevice extends Device {
       await this.setStoreValue('lastDayUsage', this.lastDayUsage);
 
       this.dayStartMeter = this.lastMeterValue;
+      this.todayStartMeter = this.lastMeterValue;
       this.lastReadingDay = { day: nowLocal.getDate() };
       await this.setStoreValue('lastReadingDay', this.lastReadingDay);
       await this.setStoreValue('dayStartMeter', this.dayStartMeter);
+      await this.setStoreValue('todayStartMeter', this.todayStartMeter);
     }
 
     // Check for new year first (before month check)
@@ -239,6 +244,19 @@ class KoreaElecDevice extends Device {
       await this.setCapabilityValue('meter_kwh_this_hour', Math.round(thisHourUsage * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_kwh_last_hour', Math.round(this.lastHourUsage * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_kwh_last_day', Math.round(this.lastDayUsage * 10) / 10).catch(this.error);
+
+      // Today's usage (since midnight)
+      const todayUsage = Math.max(0, meterValue - this.todayStartMeter);
+      await this.setCapabilityValue('meter_kwh_today', Math.round(todayUsage * 100) / 100).catch(this.error);
+
+      // Daily average for this billing period
+      const dailyAvg = this.calculateDailyAverage(monthUsage, nowLocal);
+      await this.setCapabilityValue('meter_kwh_daily_avg', Math.round(dailyAvg * 100) / 100).catch(this.error);
+
+      // Month comparison (vs same point last month)
+      const comparison = this.calculateMonthComparison(monthUsage);
+      await this.setCapabilityValue('meter_month_comparison', Math.round(comparison * 10) / 10).catch(this.error);
+
       await this.setCapabilityValue('meter_kwh_last_month', Math.round(this.lastMonthUsage * 10) / 10).catch(this.error);
       await this.setCapabilityValue('meter_money_last_month', this.formatMoney(this.lastMonthBill)).catch(this.error);
       await this.setCapabilityValue('meter_money_this_month', this.formatMoney(billResult.total)).catch(this.error);
@@ -260,10 +278,14 @@ class KoreaElecDevice extends Device {
       // Store current bill for condition check
       this.currentMonthBill = billResult.total;
 
-      // Calculate average tariff
+      // Calculate average tariff (or show base rate if no usage yet)
       if (monthUsage > 0) {
         const avgTariff = Math.round((billResult.total / monthUsage) * 10) / 10;
         await this.setCapabilityValue('meter_tariff', avgTariff).catch(this.error);
+      } else {
+        // Show first step rate when no usage
+        const baseRate = this.calculator.getFirstStepRate();
+        await this.setCapabilityValue('meter_tariff', baseRate).catch(this.error);
       }
 
       // Calculate year total: accumulated past months + current month estimate
@@ -357,6 +379,46 @@ class KoreaElecDevice extends Device {
 
   formatMoney(value) {
     return `₩${Math.round(value).toLocaleString('ko-KR')}`;
+  }
+
+  /**
+   * Calculate daily average usage for this billing period
+   */
+  calculateDailyAverage(currentMonthUsage, nowLocal) {
+    const checkDay = this.settings.check_day || 1;
+
+    // Calculate billing period start
+    let periodStart;
+    if (checkDay === 0) {
+      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), 1);
+    } else if (nowLocal.getDate() >= checkDay) {
+      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay);
+    } else {
+      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth() - 1, checkDay);
+    }
+
+    const elapsedDays = Math.max(1, Math.ceil((nowLocal - periodStart) / (1000 * 60 * 60 * 24)));
+    return currentMonthUsage / elapsedDays;
+  }
+
+  /**
+   * Calculate comparison with last month
+   * Compares current usage rate with last month's total
+   * Returns percentage: current month projected vs last month actual
+   * Example: 120% means on track to use 20% more than last month
+   */
+  calculateMonthComparison(currentMonthUsage) {
+    if (this.lastMonthUsage <= 0) {
+      return 0; // No comparison data available
+    }
+
+    // Get current forecast and compare with last month actual
+    const now = new Date();
+    const nowLocal = new Date(now.toLocaleString('en-US', { timeZone: this.timeZone }));
+    const forecast = this.calculateForecast(currentMonthUsage, nowLocal);
+
+    const percentChange = ((forecast.kwhForecast - this.lastMonthUsage) / this.lastMonthUsage) * 100;
+    return percentChange;
   }
 
   /**

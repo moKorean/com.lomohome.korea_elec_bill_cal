@@ -5,7 +5,7 @@
     "ko": "이번 시간 사용"
   },
   "uiComponent": "sensor",
-  "icon": "/assets/kwh_h.svg",
+  "icon": "/assets/kwh.svg",
   "getable": true,
   "setable": false,
   "insights": true,

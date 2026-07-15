@@ -7,7 +7,7 @@
   "getable": true,
   "setable": false,
   "insights": true,
-  "icon": "/assets/icons/step.svg",
+  "icon": "/assets/step.svg",
   "units": {
     "en": ""
   },

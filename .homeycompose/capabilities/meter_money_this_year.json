@@ -5,7 +5,7 @@
     "ko": "올해 누적 요금"
   },
   "uiComponent": "sensor",
-  "icon": "/assets/money_y.svg",
+  "icon": "/assets/money.svg",
   "getable": true,
   "setable": false,
   "insights": false

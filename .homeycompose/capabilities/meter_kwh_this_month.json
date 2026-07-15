@@ -16,7 +16,7 @@
     "ar": "كيلوواط ساعة هذا الشهر"
   },
   "uiComponent": "sensor",
-  "icon": "/assets/kwh_m.svg",
+  "icon": "/assets/kwh.svg",
   "getable": true,
   "setable": false,
   "insights": true,

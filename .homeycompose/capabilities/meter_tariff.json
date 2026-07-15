@@ -16,7 +16,7 @@
     "ar": "التعريفة النشطة"
   },
   "uiComponent": "sensor",
-  "icon": "/assets/tariff.svg",
+  "icon": "/assets/gauge.svg",
   "getable": true,
   "setable": false,
   "insights": true,

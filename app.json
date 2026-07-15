@@ -158,13 +158,16 @@
         "meter_tariff",
         "meter_kwh_this_hour",
         "meter_kwh_last_hour",
+        "meter_kwh_today",
         "meter_kwh_last_day",
+        "meter_kwh_daily_avg",
+        "meter_month_comparison",
+        "meter_kwh_forecast",
+        "meter_money_forecast",
         "meter_kwh_last_month",
         "meter_money_last_month",
         "meter_kwh_this_year",
         "meter_money_this_year",
-        "meter_kwh_forecast",
-        "meter_money_forecast",
         "meter_power"
       ],
       "capabilitiesOptions": {
@@ -285,6 +288,36 @@
             "en": "Forecast Cost",
             "ko": "예상 요금"
           }
+        },
+        "meter_kwh_today": {
+          "title": {
+            "en": "Today Usage",
+            "ko": "오늘 사용량"
+          },
+          "units": {
+            "en": "kWh"
+          },
+          "decimals": 2
+        },
+        "meter_kwh_daily_avg": {
+          "title": {
+            "en": "Daily Average",
+            "ko": "일평균 사용량"
+          },
+          "units": {
+            "en": "kWh"
+          },
+          "decimals": 2
+        },
+        "meter_month_comparison": {
+          "title": {
+            "en": "vs Last Month",
+            "ko": "지난달 대비"
+          },
+          "units": {
+            "en": "%"
+          },
+          "decimals": 1
         }
       },
       "images": {
@@ -551,13 +584,29 @@
       "getable": true,
       "setable": false,
       "insights": true,
-      "icon": "/assets/icons/step.svg",
+      "icon": "/assets/step.svg",
       "units": {
         "en": ""
       },
       "min": 1,
       "max": 4,
       "decimals": 0
+    },
+    "meter_kwh_daily_avg": {
+      "type": "number",
+      "title": {
+        "en": "Daily Average",
+        "ko": "일평균 사용량"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/kwh.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 2
     },
     "meter_kwh_forecast": {
       "type": "number",
@@ -566,7 +615,7 @@
         "ko": "예상 사용량"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/meter_kwh_forecast.svg",
+      "icon": "/assets/kwh.svg",
       "getable": true,
       "setable": false,
       "insights": true,
@@ -582,7 +631,7 @@
         "ko": "어제"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/kwh_d.svg",
+      "icon": "/assets/kwh.svg",
       "getable": true,
       "setable": false,
       "insights": true,
@@ -598,7 +647,7 @@
         "ko": "지난 시간"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/kwh_h.svg",
+      "icon": "/assets/kwh.svg",
       "getable": true,
       "setable": false,
       "insights": true,
@@ -614,7 +663,7 @@
         "ko": "지난달"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/kwh_m.svg",
+      "icon": "/assets/kwh.svg",
       "getable": true,
       "setable": false,
       "insights": true,
@@ -630,7 +679,7 @@
         "ko": "이번 시간 사용"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/kwh_h.svg",
+      "icon": "/assets/kwh.svg",
       "getable": true,
       "setable": false,
       "insights": true,
@@ -657,7 +706,7 @@
         "ar": "كيلوواط ساعة هذا الشهر"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/kwh_m.svg",
+      "icon": "/assets/kwh.svg",
       "getable": true,
       "setable": false,
       "insights": true,
@@ -684,7 +733,7 @@
         "ko": "kWh this year"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/kwh_y.svg",
+      "icon": "/assets/kwh.svg",
       "getable": true,
       "setable": false,
       "insights": true,
@@ -693,6 +742,22 @@
       },
       "decimals": 4
     },
+    "meter_kwh_today": {
+      "type": "number",
+      "title": {
+        "en": "Today Usage",
+        "ko": "오늘 사용량"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/kwh.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 2
+    },
     "meter_money_forecast": {
       "type": "string",
       "title": {
@@ -700,7 +765,7 @@
         "ko": "예상 요금"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/money_m.svg",
+      "icon": "/assets/money.svg",
       "getable": true,
       "setable": false,
       "insights": false
@@ -712,7 +777,7 @@
         "ko": "지난달 요금"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/money_m.svg",
+      "icon": "/assets/money.svg",
       "getable": true,
       "setable": false,
       "insights": false
@@ -724,7 +789,7 @@
         "ko": "이번달 예상 요금"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/money_m.svg",
+      "icon": "/assets/money.svg",
       "getable": true,
       "setable": false,
       "insights": false
@@ -736,10 +801,26 @@
         "ko": "올해 누적 요금"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/money_y.svg",
+      "icon": "/assets/money.svg",
       "getable": true,
       "setable": false,
       "insights": false
+    },
+    "meter_month_comparison": {
+      "type": "number",
+      "title": {
+        "en": "vs Last Month",
+        "ko": "지난달 대비"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/trending.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "units": {
+        "en": "%"
+      },
+      "decimals": 1
     },
     "meter_tariff": {
       "type": "number",
@@ -759,7 +840,7 @@
         "ar": "التعريفة النشطة"
       },
       "uiComponent": "sensor",
-      "icon": "/assets/tariff.svg",
+      "icon": "/assets/gauge.svg",
       "getable": true,
       "setable": false,
       "insights": true,
