@@ -1,8 +1,8 @@
 {
   "type": "number",
   "title": {
-    "en": "Forecast Usage",
-    "ko": "예상 사용량"
+    "en": "This Month Forecast Usage",
+    "ko": "이번달 예상 사용량"
   },
   "uiComponent": "sensor",
   "icon": "/assets/kwh.svg",

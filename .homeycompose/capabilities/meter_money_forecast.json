@@ -1,8 +1,8 @@
 {
   "type": "number",
   "title": {
-    "en": "Forecast Cost",
-    "ko": "예상 요금"
+    "en": "This Month Forecast Cost",
+    "ko": "이번달 예상 요금"
   },
   "units": {
     "en": "₩",

@@ -34,8 +34,12 @@ class KoreaElecDevice extends Device {
 
   initCalculator() {
     try {
+      const tariffType = this.settings.tariff_type || 'residential';
+      const isResidential = (tariffType === 'residential');
       this.calculator = new KoreaElecBillCalculator({
         pressure: this.settings.pressure || 'low',
+        tariffType: isResidential ? 'residential' : tariffType,
+        contractKw: this.settings.contract_kw || 0,
         checkDay: this.settings.check_day || 1,
         today: new Date(),
         bigfamDcCfg: parseInt(this.settings.bigfam_dc, 10) || 0,
@@ -269,8 +273,15 @@ class KoreaElecDevice extends Device {
         this.currentKwhStep = newStep;
         await this.setStoreValue('currentKwhStep', newStep);
 
-        // Trigger flow
+        // Trigger flow (fires on any change, incl. the reset at the meter-reading day)
         await this.driver.triggerKwhStepChanged(this, { old_step: oldStep, new_step: newStep });
+
+        // Additionally fire the "increased" trigger only when the step goes up.
+        // Within a billing period the step only rises; it drops only on the
+        // meter-reading-day reset, which this trigger deliberately ignores.
+        if (newStep > oldStep) {
+          await this.driver.triggerKwhStepIncreased(this, { old_step: oldStep, new_step: newStep });
+        }
       }
 
       await this.setCapabilityValue('kwh_step', newStep).catch(this.error);
@@ -327,6 +338,18 @@ class KoreaElecDevice extends Device {
       // Year start cannot be greater than current meter
       if (yearStart > currentMeter && currentMeter > 0) {
         throw new Error(this.homey.__('error_year_greater_than_current') || 'Year start cannot be greater than current meter value');
+      }
+    }
+
+    // Validate contract power for non-residential tariffs.
+    // (Homey device settings can't hide fields conditionally, so we validate
+    //  instead: non-residential types except Off-peak(A) need contract_kw > 0.)
+    if (changedKeys.includes('tariff_type') || changedKeys.includes('contract_kw')) {
+      const tt = newSettings.tariff_type || 'residential';
+      const needsKw = tt !== 'residential' && tt !== 'night_gap';
+      if (needsKw && (!newSettings.contract_kw || newSettings.contract_kw <= 0)) {
+        throw new Error(this.homey.__('error_contract_kw_required')
+          || 'This contract type requires Contract Power (kW) greater than 0. (이 계약종별은 계약전력(kW)을 0보다 크게 입력해야 합니다.)');
       }
     }
 

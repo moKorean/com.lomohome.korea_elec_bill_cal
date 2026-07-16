@@ -8,7 +8,18 @@
 'use strict';
 
 const Homey = require('homey');
-const { HomeyAPI } = require('homey-api');
+
+// Import only the HomeyAPI submodule. `require('homey-api')` eagerly loads ~20
+// unused Athom Cloud API clients (weather, store, backup, firmware, ...) and
+// their dependencies — ~200 extra modules / ~22 MB RSS. We only need
+// HomeyAPI.createAppAPI(). Fall back to the package root if the internal path
+// ever changes.
+let HomeyAPI;
+try {
+  HomeyAPI = require('homey-api/lib/HomeyAPI/HomeyAPI');
+} catch (err) {
+  ({ HomeyAPI } = require('homey-api'));
+}
 
 class KoreaElecBillApp extends Homey.App {
 

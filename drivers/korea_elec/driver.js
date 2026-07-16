@@ -18,6 +18,10 @@ class KoreaElecDriver extends Driver {
     this.homey.flow.getDeviceTriggerCard('kwh_step_changed')
       .registerRunListener(async (args, state) => true);
 
+    // Register flow trigger for step increase (only fires when step goes up)
+    this.homey.flow.getDeviceTriggerCard('kwh_step_increased')
+      .registerRunListener(async (args, state) => true);
+
     // Register flow condition for money exceeds
     this.homey.flow.getConditionCard('money_exceeds')
       .registerRunListener(async (args) => {
@@ -33,6 +37,16 @@ class KoreaElecDriver extends Driver {
       this.log(`Triggered kwh_step_changed: ${tokens.old_step} -> ${tokens.new_step}`);
     } catch (error) {
       this.error('Failed to trigger kwh_step_changed:', error);
+    }
+  }
+
+  async triggerKwhStepIncreased(device, tokens) {
+    try {
+      await this.homey.flow.getDeviceTriggerCard('kwh_step_increased')
+        .trigger(device, tokens);
+      this.log(`Triggered kwh_step_increased: ${tokens.old_step} -> ${tokens.new_step}`);
+    } catch (error) {
+      this.error('Failed to trigger kwh_step_increased:', error);
     }
   }
 
@@ -61,7 +75,9 @@ class KoreaElecDriver extends Driver {
               homey_device_id: id,
               homey_device_name: device.name,
               check_day: 1,
+              tariff_type: 'residential',
               pressure: 'low',
+              contract_kw: 0,
               bigfam_dc: '0',
               welfare_dc: '0',
               meter_total_start: 0,

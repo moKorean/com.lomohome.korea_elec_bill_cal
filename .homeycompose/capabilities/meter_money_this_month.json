@@ -2,7 +2,7 @@
   "type": "number",
   "title": {
     "en": "This Month Cost",
-    "ko": "이번달 예상 요금"
+    "ko": "이번달 사용량 요금"
   },
   "units": {
     "en": "₩",

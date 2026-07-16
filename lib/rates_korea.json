@@ -131,5 +131,31 @@
                 "summer": { "a1": [16000, 0.3], "a2": 0.3, "b1": 20000, "b2": 0.3, "b3": 20000, "b4": 12000, "b5": 10000, "weak": [0, 0] }
             }
         }
+    },
+    "_TARIFF_FLAT_COMMENT": "비주택용 정액(계절별 단일요율) 종별. KEPCO 2026-06-01 시행. basic=기본요금(원/kW), kwh=계절별 전력량요금(원/kWh, 여름6-8/봄가을3-5,9-10/겨울11-2), kwhFlat=계절무관 단일요율. 기후환경요금·연료비조정은 PRICE_ADJUSTMENT를 재사용.",
+    "TARIFF_FLAT": {
+        "general_gap1_low":       { "basic": 6160, "kwh": { "summer": 132.4, "spring_fall": 91.9,  "winter": 119.0 } },
+        "general_gap1_highA_s1":  { "basic": 7170, "kwh": { "summer": 142.6, "spring_fall": 98.6,  "winter": 130.3 } },
+        "general_gap1_highA_s2":  { "basic": 8230, "kwh": { "summer": 138.6, "spring_fall": 94.3,  "winter": 125.0 } },
+        "general_gap1_highB_s1":  { "basic": 7170, "kwh": { "summer": 140.5, "spring_fall": 97.5,  "winter": 127.3 } },
+        "general_gap1_highB_s2":  { "basic": 8230, "kwh": { "summer": 135.2, "spring_fall": 92.2,  "winter": 122.0 } },
+
+        "edu_gap_low":       { "basic": 5230, "kwh": { "summer": 123.6, "spring_fall": 86.4, "winter": 110.8 } },
+        "edu_gap_highA_s1":  { "basic": 5550, "kwh": { "summer": 123.3, "spring_fall": 86.5, "winter": 109.3 } },
+        "edu_gap_highA_s2":  { "basic": 6370, "kwh": { "summer": 118.8, "spring_fall": 82.1, "winter": 104.8 } },
+        "edu_gap_highB_s1":  { "basic": 5550, "kwh": { "summer": 122.6, "spring_fall": 86.1, "winter": 108.5 } },
+        "edu_gap_highB_s2":  { "basic": 6370, "kwh": { "summer": 118.1, "spring_fall": 81.6, "winter": 104.0 } },
+
+        "ind_gap1_low":       { "basic": 5550, "kwh": { "summer": 116.2, "spring_fall": 94.4,  "winter": 114.5 } },
+        "ind_gap1_highA_s1":  { "basic": 6490, "kwh": { "summer": 124.8, "spring_fall": 101.1, "winter": 124.7 } },
+        "ind_gap1_highA_s2":  { "basic": 7470, "kwh": { "summer": 120.0, "spring_fall": 96.5,  "winter": 118.2 } },
+        "ind_gap1_highB_s1":  { "basic": 6000, "kwh": { "summer": 123.6, "spring_fall": 100.0, "winter": 123.2 } },
+        "ind_gap1_highB_s2":  { "basic": 6900, "kwh": { "summer": 118.9, "spring_fall": 95.4,  "winter": 117.1 } },
+
+        "farm_gap":      { "basic": 360,  "kwhFlat": 48.3 },
+        "farm_eul_low":  { "basic": 1150, "kwhFlat": 65.9 },
+        "farm_eul_high": { "basic": 1210, "kwh": { "summer": 68.6, "spring_fall": 66.6, "winter": 68.6 } },
+
+        "night_gap":     { "basic": 0, "kwh": { "summer": 82.1, "spring_fall": 82.1, "winter": 103.5 }, "minKwh": 20 }
     }
 }

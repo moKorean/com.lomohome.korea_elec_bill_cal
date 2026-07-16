@@ -1,0 +1,38 @@
+{
+  "id": "kwh_step_increased",
+  "title": {
+    "en": "Progressive step increased",
+    "ko": "누진 단계가 올라가면"
+  },
+  "hint": {
+    "en": "Triggers only when the progressive rate step goes up (not on the reset at the meter-reading day)",
+    "ko": "누진 단계가 올라갈 때만 실행됩니다 (검침일 초기화로 내려갈 때는 실행되지 않음)"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=korea_elec"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "old_step",
+      "type": "number",
+      "title": {
+        "en": "Previous step",
+        "ko": "이전 단계"
+      },
+      "example": 1
+    },
+    {
+      "name": "new_step",
+      "type": "number",
+      "title": {
+        "en": "New step",
+        "ko": "새 단계"
+      },
+      "example": 2
+    }
+  ]
+}

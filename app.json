@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.lomohome.korea_elec_bill_cal",
-  "version": "1.2.0",
+  "version": "1.4.0",
   "compatibility": ">=12.9.0",
   "brandColor": "#0066cc",
   "sdk": 3,
@@ -106,6 +106,44 @@
             "example": 2
           }
         ]
+      },
+      {
+        "id": "kwh_step_increased",
+        "title": {
+          "en": "Progressive step increased",
+          "ko": "누진 단계가 올라가면"
+        },
+        "hint": {
+          "en": "Triggers only when the progressive rate step goes up (not on the reset at the meter-reading day)",
+          "ko": "누진 단계가 올라갈 때만 실행됩니다 (검침일 초기화로 내려갈 때는 실행되지 않음)"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=korea_elec"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "old_step",
+            "type": "number",
+            "title": {
+              "en": "Previous step",
+              "ko": "이전 단계"
+            },
+            "example": 1
+          },
+          {
+            "name": "new_step",
+            "type": "number",
+            "title": {
+              "en": "New step",
+              "ko": "새 단계"
+            },
+            "example": 2
+          }
+        ]
       }
     ],
     "conditions": [
@@ -150,6 +188,11 @@
         "ko": "한국 전력 요금 계산기"
       },
       "class": "sensor",
+      "energy": {
+        "approximation": {
+          "usageConstant": 0
+        }
+      },
       "capabilities": [
         "meter_money_this_month",
         "meter_kwh_this_month",
@@ -240,7 +283,7 @@
         "meter_money_this_month": {
           "title": {
             "en": "This Month Cost",
-            "ko": "이번달 예상 요금"
+            "ko": "이번달 사용량 요금"
           }
         },
         "meter_money_this_year": {
@@ -274,8 +317,8 @@
         },
         "meter_kwh_forecast": {
           "title": {
-            "en": "Forecast Usage",
-            "ko": "예상 사용량"
+            "en": "This Month Forecast Usage",
+            "ko": "이번달 예상 사용량"
           },
           "units": {
             "en": "kWh"
@@ -284,8 +327,8 @@
         },
         "meter_money_forecast": {
           "title": {
-            "en": "Forecast Cost",
-            "ko": "예상 요금"
+            "en": "This Month Forecast Cost",
+            "ko": "이번달 예상 요금"
           }
         },
         "meter_kwh_today": {
@@ -398,15 +441,170 @@
               "max": 31
             },
             {
+              "id": "tariff_type",
+              "type": "dropdown",
+              "label": {
+                "en": "Contract Type",
+                "ko": "계약종별"
+              },
+              "hint": {
+                "en": "Your KEPCO contract type. 'Residential' uses the Voltage Type below. Non-residential types require Contract Power (kW) below, and the large-family/welfare discounts do not apply to them. Time-of-use tariffs are not listed because they need per-hour usage data the app cannot read.",
+                "ko": "한전 계약종별입니다. '주택용'은 아래 '전압 구분'을 사용합니다. 비주택용 종별은 아래 '계약전력(kW)' 입력이 필요하며, 대가족·복지 할인은 주택용에만 적용됩니다. 시간대별(경/중/최대부하) 요금제는 앱이 시간대별 사용량을 알 수 없어 목록에서 제외했습니다."
+              },
+              "value": "residential",
+              "values": [
+                {
+                  "id": "residential",
+                  "label": {
+                    "en": "Residential",
+                    "ko": "주택용"
+                  }
+                },
+                {
+                  "id": "general_gap1_low",
+                  "label": {
+                    "en": "General (A) I - Low",
+                    "ko": "일반용(갑)Ⅰ 저압"
+                  }
+                },
+                {
+                  "id": "general_gap1_highA_s1",
+                  "label": {
+                    "en": "General (A) I - High A, Opt.I",
+                    "ko": "일반용(갑)Ⅰ 고압A 선택Ⅰ"
+                  }
+                },
+                {
+                  "id": "general_gap1_highA_s2",
+                  "label": {
+                    "en": "General (A) I - High A, Opt.II",
+                    "ko": "일반용(갑)Ⅰ 고압A 선택Ⅱ"
+                  }
+                },
+                {
+                  "id": "general_gap1_highB_s1",
+                  "label": {
+                    "en": "General (A) I - High B, Opt.I",
+                    "ko": "일반용(갑)Ⅰ 고압B 선택Ⅰ"
+                  }
+                },
+                {
+                  "id": "general_gap1_highB_s2",
+                  "label": {
+                    "en": "General (A) I - High B, Opt.II",
+                    "ko": "일반용(갑)Ⅰ 고압B 선택Ⅱ"
+                  }
+                },
+                {
+                  "id": "edu_gap_low",
+                  "label": {
+                    "en": "Education (A) - Low",
+                    "ko": "교육용(갑) 저압"
+                  }
+                },
+                {
+                  "id": "edu_gap_highA_s1",
+                  "label": {
+                    "en": "Education (A) - High A, Opt.I",
+                    "ko": "교육용(갑) 고압A 선택Ⅰ"
+                  }
+                },
+                {
+                  "id": "edu_gap_highA_s2",
+                  "label": {
+                    "en": "Education (A) - High A, Opt.II",
+                    "ko": "교육용(갑) 고압A 선택Ⅱ"
+                  }
+                },
+                {
+                  "id": "edu_gap_highB_s1",
+                  "label": {
+                    "en": "Education (A) - High B, Opt.I",
+                    "ko": "교육용(갑) 고압B 선택Ⅰ"
+                  }
+                },
+                {
+                  "id": "edu_gap_highB_s2",
+                  "label": {
+                    "en": "Education (A) - High B, Opt.II",
+                    "ko": "교육용(갑) 고압B 선택Ⅱ"
+                  }
+                },
+                {
+                  "id": "ind_gap1_low",
+                  "label": {
+                    "en": "Industrial (A) I - Low",
+                    "ko": "산업용(갑)Ⅰ 저압"
+                  }
+                },
+                {
+                  "id": "ind_gap1_highA_s1",
+                  "label": {
+                    "en": "Industrial (A) I - High A, Opt.I",
+                    "ko": "산업용(갑)Ⅰ 고압A 선택Ⅰ"
+                  }
+                },
+                {
+                  "id": "ind_gap1_highA_s2",
+                  "label": {
+                    "en": "Industrial (A) I - High A, Opt.II",
+                    "ko": "산업용(갑)Ⅰ 고압A 선택Ⅱ"
+                  }
+                },
+                {
+                  "id": "ind_gap1_highB_s1",
+                  "label": {
+                    "en": "Industrial (A) I - High B, Opt.I",
+                    "ko": "산업용(갑)Ⅰ 고압B 선택Ⅰ"
+                  }
+                },
+                {
+                  "id": "ind_gap1_highB_s2",
+                  "label": {
+                    "en": "Industrial (A) I - High B, Opt.II",
+                    "ko": "산업용(갑)Ⅰ 고압B 선택Ⅱ"
+                  }
+                },
+                {
+                  "id": "farm_gap",
+                  "label": {
+                    "en": "Agricultural (A)",
+                    "ko": "농사용(갑)"
+                  }
+                },
+                {
+                  "id": "farm_eul_low",
+                  "label": {
+                    "en": "Agricultural (B) - Low",
+                    "ko": "농사용(을) 저압"
+                  }
+                },
+                {
+                  "id": "farm_eul_high",
+                  "label": {
+                    "en": "Agricultural (B) - High",
+                    "ko": "농사용(을) 고압"
+                  }
+                },
+                {
+                  "id": "night_gap",
+                  "label": {
+                    "en": "Off-peak (A)",
+                    "ko": "심야전력(갑)"
+                  }
+                }
+              ]
+            },
+            {
               "id": "pressure",
               "type": "dropdown",
               "label": {
-                "en": "Voltage Type",
-                "ko": "전압 구분"
+                "en": "Voltage Type (Residential only)",
+                "ko": "전압 구분 (주택용 전용)"
               },
               "hint": {
-                "en": "Low voltage (most residential) or High voltage",
-                "ko": "저압(일반 가정) 또는 고압"
+                "en": "Only used when Contract Type is Residential. Low voltage is used in most detached houses; high voltage is mainly used in apartments. Ignored for other contract types.",
+                "ko": "계약종별이 '주택용'일 때만 사용됩니다. 저압은 일반 단독주택, 고압은 주로 아파트에서 사용합니다. 다른 계약종별에서는 무시됩니다."
               },
               "value": "low",
               "values": [
@@ -414,17 +612,32 @@
                   "id": "low",
                   "label": {
                     "en": "Low Voltage (Residential)",
-                    "ko": "저압 (주거용)"
+                    "ko": "저압 (주택용)"
                   }
                 },
                 {
                   "id": "high",
                   "label": {
-                    "en": "High Voltage",
-                    "ko": "고압"
+                    "en": "High Voltage (Residential)",
+                    "ko": "고압 (주택용)"
                   }
                 }
               ]
+            },
+            {
+              "id": "contract_kw",
+              "type": "number",
+              "label": {
+                "en": "Contract Power (kW)",
+                "ko": "계약전력 (kW)"
+              },
+              "hint": {
+                "en": "Required for non-residential contract types: basic charge = won/kW x contract power. Leave 0 for Residential and Off-peak (A).",
+                "ko": "비주택용 계약종별의 기본요금 계산에 필요합니다 (기본요금 = 원/kW × 계약전력). 주택용과 심야전력(갑)은 0으로 두세요."
+              },
+              "value": 0,
+              "min": 0,
+              "decimals": 1
             }
           ]
         },
@@ -551,8 +764,8 @@
                 "ko": "월초(검침일) 미터값 (kWh)"
               },
               "hint": {
-                "en": "Your electricity meter reading (kWh) on the last KEPCO meter-reading day. Used as the baseline for this month's usage. On first install this is auto-set to the current reading; if you added the device mid-month, enter the reading from your meter-reading day for an accurate this-month total.",
-                "ko": "지난 검침일 기준 전력량계 미터값(kWh)입니다. 이번달 사용량 계산의 기준점으로 쓰입니다. 최초 설치 시 현재 값으로 자동 설정되며, 월 중간에 추가했다면 검침일 당시 미터값을 직접 입력해야 이번달 사용량이 정확합니다."
+                "en": "Your electricity meter reading (kWh) on the last KEPCO meter-reading day. Used as the baseline for this month's usage. On first install this is auto-set to the current reading; if you added the device mid-month, enter the reading from your meter-reading day for an accurate this-month total. After the first install, this value updates automatically on every meter-reading day.",
+                "ko": "지난 검침일 기준 전력량계 미터값(kWh)입니다. 이번달 사용량 계산의 기준점으로 쓰입니다. 최초 설치 시 현재 값으로 자동 설정되며, 월 중간에 추가했다면 검침일 당시 미터값을 직접 입력해야 이번달 사용량이 정확합니다. 최초 설치 이후에는 검침일이 지날 때마다 이 값이 자동으로 갱신됩니다."
               },
               "value": 0,
               "decimals": 2
@@ -565,8 +778,8 @@
                 "ko": "연초 미터값 (kWh)"
               },
               "hint": {
-                "en": "Your electricity meter reading (kWh) at the start of the year. Used as the baseline for this year's usage. On first install this is auto-set to the current reading; enter the January 1st reading for an accurate year-to-date total.",
-                "ko": "연초(1월 1일) 기준 전력량계 미터값(kWh)입니다. 올해 누적 사용량 계산의 기준점으로 쓰입니다. 최초 설치 시 현재 값으로 자동 설정되며, 연초 미터값을 직접 입력하면 올해 누적 사용량이 정확합니다."
+                "en": "Your electricity meter reading (kWh) at the start of the year. Used as the baseline for this year's usage. On first install this is auto-set to the current reading; enter the January 1st reading for an accurate year-to-date total. After the first install, this value updates automatically at the start of each year.",
+                "ko": "연초(1월 1일) 기준 전력량계 미터값(kWh)입니다. 올해 누적 사용량 계산의 기준점으로 쓰입니다. 최초 설치 시 현재 값으로 자동 설정되며, 연초 미터값을 직접 입력하면 올해 누적 사용량이 정확합니다. 최초 설치 이후에는 매년 초에 이 값이 자동으로 갱신됩니다."
               },
               "value": 0,
               "decimals": 2
@@ -614,8 +827,8 @@
     "meter_kwh_forecast": {
       "type": "number",
       "title": {
-        "en": "Forecast Usage",
-        "ko": "예상 사용량"
+        "en": "This Month Forecast Usage",
+        "ko": "이번달 예상 사용량"
       },
       "uiComponent": "sensor",
       "icon": "/assets/kwh.svg",
@@ -764,8 +977,8 @@
     "meter_money_forecast": {
       "type": "number",
       "title": {
-        "en": "Forecast Cost",
-        "ko": "예상 요금"
+        "en": "This Month Forecast Cost",
+        "ko": "이번달 예상 요금"
       },
       "units": {
         "en": "₩",
@@ -799,7 +1012,7 @@
       "type": "number",
       "title": {
         "en": "This Month Cost",
-        "ko": "이번달 예상 요금"
+        "ko": "이번달 사용량 요금"
       },
       "units": {
         "en": "₩",
