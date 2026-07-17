@@ -9,8 +9,8 @@
     "ko": "한국 전력 요금 계산기"
   },
   "description": {
-    "en": "Calculate Korean electricity bills based on KEPCO progressive rate system. Track usage and estimate monthly costs.",
-    "ko": "한국전력(KEPCO) 누진제 요금 체계를 기반으로 전기 요금을 계산합니다. 사용량을 추적하고 월별 예상 요금을 확인하세요."
+    "en": "Know your electricity bill before it arrives",
+    "ko": "전기요금, 고지서가 오기 전에 미리 확인하세요"
   },
   "category": "energy",
   "tags": {
