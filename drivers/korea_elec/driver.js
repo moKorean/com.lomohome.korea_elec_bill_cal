@@ -47,6 +47,10 @@ class KoreaElecDriver extends Driver {
         const nowLocal = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
         return device.touPeriod(nowLocal) === period;
       });
+
+    // Condition: current progressive step is at least N
+    this.homey.flow.getConditionCard('kwh_step_at_least')
+      .registerRunListener(async (args) => (args.device.currentKwhStep || 1) >= Number(args.step));
   }
 
   async triggerNewBillingPeriod(device, tokens) {
@@ -124,6 +128,9 @@ class KoreaElecDriver extends Driver {
               pressure: 'low',
               contract_kw: 0,
               budget_won: 0,
+              use_auto_adjustment: true,
+              climate_price: 9,
+              fuel_price: 5,
               bigfam_dc: '0',
               welfare_dc: '0',
               meter_total_start: 0,

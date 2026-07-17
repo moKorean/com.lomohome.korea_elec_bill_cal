@@ -33,12 +33,12 @@ SENSORS
 - Year-to-date usage and accumulated cost
 
 EXTRA SENSORS
-- Budget usage (%), current load period (off/mid/on-peak), CO2 emissions (kg), vs yesterday (%)
+- Budget usage (%), current load period (off/mid/on-peak), CO2 emissions (kg), vs yesterday (%), generation/exported (kWh)
 
 FLOW AUTOMATION
 - Triggers: progressive step changed / step increased / new billing period / forecast exceeds budget / cost rises above amount
-- Conditions: this month's cost exceeds an amount / current load period (off/mid/on-peak)
-- Setting: monthly budget (won) drives the budget-usage sensor and trigger
+- Conditions: cost exceeds an amount / current load period / progressive step at least N
+- Settings: monthly budget (won); manual climate/fuel-adjustment rates (auto by default); solar net metering (subtract exported energy)
 
 SETUP
 1. Add the device and select a power meter device that has the "meter_power" capability as the source.

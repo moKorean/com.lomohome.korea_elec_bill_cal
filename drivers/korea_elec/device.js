@@ -53,10 +53,14 @@ class KoreaElecDevice extends Device {
     try {
       const tariffType = this.settings.tariff_type || 'residential';
       const isResidential = (tariffType === 'residential');
+      // Climate/fuel adjustment: auto (built-in rates) by default, manual override otherwise
+      const useAuto = this.settings.use_auto_adjustment !== false;
       this.calculator = new KoreaElecBillCalculator({
         pressure: this.settings.pressure || 'low',
         tariffType: isResidential ? 'residential' : tariffType,
         contractKw: this.settings.contract_kw || 0,
+        climatePrice: useAuto ? null : (this.settings.climate_price ?? null),
+        fuelPrice: useAuto ? null : (this.settings.fuel_price ?? null),
         checkDay: this.settings.check_day || 1,
         today: new Date(),
         bigfamDcCfg: parseInt(this.settings.bigfam_dc, 10) || 0,
@@ -125,6 +129,11 @@ class KoreaElecDevice extends Device {
     // Day-over-day comparison + budget-exceeded edge state
     this.dayBeforeUsage = await this.getStoreValue('dayBeforeUsage') || 0;
     this.budgetExceededFired = false;
+
+    // Solar net metering: exported (generation) cumulative + billing-period baseline
+    this.exportMeterValue = await this.getStoreValue('exportMeterValue') || 0;
+    this.exportMonthStart = await this.getStoreValue('exportMonthStart') || 0;
+    this.lastSourceValue = null;
   }
 
   async setupSourceDevice() {
@@ -156,6 +165,18 @@ class KoreaElecDevice extends Device {
         });
         this.log(`Listening to meter_power from ${this.sourceDevice.name}`);
 
+        // Also track exported (generation) energy for solar net metering, if present
+        if (this.sourceDevice.capabilities.includes('meter_power.exported')) {
+          const eo = this.sourceDevice.capabilitiesObj && this.sourceDevice.capabilitiesObj['meter_power.exported'];
+          if (eo && typeof eo.value === 'number') this.exportMeterValue = eo.value;
+          this.exportListener = this.sourceDevice.makeCapabilityInstance('meter_power.exported', async (value) => {
+            this.exportMeterValue = value || 0;
+            await this.setStoreValue('exportMeterValue', this.exportMeterValue);
+            if (this.lastSourceValue != null) await this.updateMeter(this.lastSourceValue).catch(this.error);
+          });
+          this.log('Also tracking meter_power.exported (generation)');
+        }
+
         // Initial update
         if (this.sourceDevice.capabilitiesObj && this.sourceDevice.capabilitiesObj.meter_power) {
           const initialValue = this.sourceDevice.capabilitiesObj.meter_power.value;
@@ -178,8 +199,10 @@ class KoreaElecDevice extends Device {
             this.yearStartMeter = currentMeter;
             this.lastMeterValue = currentMeter;
             this.lastBillingPeriod = this.getCurrentBillingPeriod();
+            this.exportMonthStart = this.exportMeterValue;
 
             // Persist values
+            await this.setStoreValue('exportMonthStart', this.exportMonthStart);
             await this.setStoreValue('hourStartMeter', this.hourStartMeter);
             await this.setStoreValue('dayStartMeter', this.dayStartMeter);
             await this.setStoreValue('todayStartMeter', this.todayStartMeter);
@@ -204,6 +227,9 @@ class KoreaElecDevice extends Device {
       this.log('Invalid meter value:', sourceMeterValue);
       return;
     }
+
+    // Remember the raw source value so the exported-energy listener can recompute
+    this.lastSourceValue = sourceMeterValue;
 
     // Apply total meter offset
     const meterValue = sourceMeterValue + this.meterTotalStart;
@@ -294,6 +320,10 @@ class KoreaElecDevice extends Device {
       await this.setStoreValue('touOffKwh', 0);
       await this.setStoreValue('touMidKwh', 0);
       await this.setStoreValue('touPeakKwh', 0);
+
+      // Reset solar export baseline for the new billing period
+      this.exportMonthStart = this.exportMeterValue;
+      await this.setStoreValue('exportMonthStart', this.exportMonthStart);
     }
 
     // Calculate usage
@@ -315,10 +345,18 @@ class KoreaElecDevice extends Device {
       }
     }
 
+    // Solar net metering: billable usage = consumption - exported generation.
+    // Applied to non-TOU tariffs only (TOU billing uses load-period buckets).
+    const exportMonth = Math.max(0, this.exportMeterValue - this.exportMonthStart);
+    let billableUsage = monthUsage;
+    if (this.settings.solar_offset && !this.tariffIsTou) {
+      billableUsage = Math.max(0, monthUsage - exportMonth);
+    }
+
     // Calculate bill using Korean progressive rate
     try {
       this.initCalculator(); // Re-init with current date
-      const billResult = this.calculator.getSimpleBill(monthUsage, {
+      const billResult = this.calculator.getSimpleBill(billableUsage, {
         off: this.touOffKwh, mid: this.touMidKwh, peak: this.touPeakKwh,
       });
 
@@ -348,6 +386,9 @@ class KoreaElecDevice extends Device {
 
       // CO2 emissions estimate (국가 전력 배출계수 약 0.4594 kgCO2/kWh)
       await this.setCapabilityValue('meter_co2', Math.round(monthUsage * 0.4594 * 10) / 10).catch(this.error);
+
+      // Solar generation (exported) this billing period
+      await this.setCapabilityValue('meter_kwh_generated', Math.round(exportMonth * 100) / 100).catch(this.error);
 
       // Day-over-day comparison (어제 vs 그저께)
       if (this.dayBeforeUsage > 0) {
@@ -402,8 +443,8 @@ class KoreaElecDevice extends Device {
       const yearTotalBill = this.yearAccumulatedBill + billResult.total;
       await this.setCapabilityValue('meter_money_this_year', Math.round(yearTotalBill)).catch(this.error);
 
-      // Calculate forecast (예상 사용량/요금)
-      const forecast = this.calculateForecast(monthUsage, nowLocal);
+      // Calculate forecast (예상 사용량/요금) — uses net (billable) usage for solar
+      const forecast = this.calculateForecast(billableUsage, nowLocal);
       await this.setCapabilityValue('meter_kwh_forecast', Math.round(forecast.kwhForecast * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_money_forecast', Math.round(forecast.moneyForecast)).catch(this.error);
 
@@ -504,6 +545,9 @@ class KoreaElecDevice extends Device {
           if (this.capabilityListener) {
             this.capabilityListener.destroy();
           }
+          if (this.exportListener) {
+            this.exportListener.destroy();
+          }
           await this.setupSourceDevice();
         }
 
@@ -521,6 +565,9 @@ class KoreaElecDevice extends Device {
     this.log('Device deleted');
     if (this.capabilityListener) {
       this.capabilityListener.destroy();
+    }
+    if (this.exportListener) {
+      this.exportListener.destroy();
     }
   }
 

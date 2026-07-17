@@ -1,0 +1,16 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Generation (Exported)",
+    "ko": "이번달 발전량"
+  },
+  "units": {
+    "en": "kWh"
+  },
+  "decimals": 2,
+  "uiComponent": "sensor",
+  "icon": "/assets/kwh.svg",
+  "getable": true,
+  "setable": false,
+  "insights": true
+}

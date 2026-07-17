@@ -256,6 +256,62 @@
     ],
     "conditions": [
       {
+        "id": "kwh_step_at_least",
+        "title": {
+          "en": "Progressive step is at least ...",
+          "ko": "누진 단계가 ... 이상이면"
+        },
+        "titleFormatted": {
+          "en": "Progressive step !{{is|is not}} at least step [[step]]",
+          "ko": "누진 단계가 [[step]] !{{이상이면|미만이면}}"
+        },
+        "hint": {
+          "en": "Checks whether the current progressive step is at or above the selected level. Step 4 is the winter/summer super-user (highest) rate.",
+          "ko": "현재 누진 단계가 선택한 단계 이상인지 확인합니다. 4단계는 하계·동계 슈퍼유저(최고) 요금입니다."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=korea_elec"
+          },
+          {
+            "type": "dropdown",
+            "name": "step",
+            "values": [
+              {
+                "id": "1",
+                "label": {
+                  "en": "Step 1",
+                  "ko": "1단계"
+                }
+              },
+              {
+                "id": "2",
+                "label": {
+                  "en": "Step 2",
+                  "ko": "2단계"
+                }
+              },
+              {
+                "id": "3",
+                "label": {
+                  "en": "Step 3",
+                  "ko": "3단계"
+                }
+              },
+              {
+                "id": "4",
+                "label": {
+                  "en": "Step 4 (super-user)",
+                  "ko": "4단계 (슈퍼유저)"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
         "id": "load_period_is",
         "title": {
           "en": "Current load period !{{is|is not}} ...",
@@ -365,6 +421,7 @@
         "meter_day_comparison",
         "meter_kwh_last_day",
         "meter_kwh_daily_avg",
+        "meter_kwh_generated",
         "meter_month_comparison",
         "meter_co2",
         "meter_kwh_last_month",
@@ -876,6 +933,81 @@
         {
           "type": "group",
           "label": {
+            "en": "Climate/Fuel Adjustment Rates",
+            "ko": "기후환경·연료비조정 단가"
+          },
+          "children": [
+            {
+              "id": "use_auto_adjustment",
+              "type": "checkbox",
+              "label": {
+                "en": "Use built-in rates (auto)",
+                "ko": "내장 요율 자동 사용"
+              },
+              "hint": {
+                "en": "When on (default), the climate/environment fee and fuel-cost adjustment use the app's built-in latest KEPCO rates. Turn off to enter them manually below (e.g. after a KEPCO change before the app is updated).",
+                "ko": "켜짐(기본)이면 기후환경요금·연료비조정 단가를 앱 내장 최신 요율로 자동 사용합니다. 끄면 아래에 직접 입력한 값을 사용합니다 (앱 업데이트 전에 한전이 요율을 바꾼 경우 등)."
+              },
+              "value": true
+            },
+            {
+              "id": "climate_price",
+              "type": "number",
+              "label": {
+                "en": "Climate/Environment Fee (won/kWh)",
+                "ko": "기후환경요금 단가 (원/kWh)"
+              },
+              "hint": {
+                "en": "Used only when 'Use built-in rates' is off. KEPCO 2024-2026: 9.0 won/kWh.",
+                "ko": "'내장 요율 자동 사용'이 꺼졌을 때만 적용됩니다. 한전 2024~2026년 기준 9.0원/kWh."
+              },
+              "value": 9,
+              "min": 0,
+              "decimals": 1
+            },
+            {
+              "id": "fuel_price",
+              "type": "number",
+              "label": {
+                "en": "Fuel Cost Adjustment (won/kWh)",
+                "ko": "연료비조정 단가 (원/kWh)"
+              },
+              "hint": {
+                "en": "Used only when 'Use built-in rates' is off. Capped at +/-5 won/kWh (currently +5).",
+                "ko": "'내장 요율 자동 사용'이 꺼졌을 때만 적용됩니다. ±5원/kWh 상한 (현재 +5)."
+              },
+              "value": 5,
+              "min": -5,
+              "max": 5,
+              "decimals": 1
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Solar (Net Metering)",
+            "ko": "태양광 (상계)"
+          },
+          "children": [
+            {
+              "id": "solar_offset",
+              "type": "checkbox",
+              "label": {
+                "en": "Subtract exported (solar) energy",
+                "ko": "송전(태양광) 사용량 차감"
+              },
+              "hint": {
+                "en": "If your source device reports exported energy (meter_power.exported), enable this to bill on net usage (consumption minus exported). Approximates KEPCO net metering (no surplus carryover). Not combined with time-of-use tariffs.",
+                "ko": "소스 기기가 송전량(meter_power.exported)을 제공하면, 켜서 순사용량(소비 − 송전)으로 요금을 계산합니다. 한전 상계거래 근사(잉여 이월 미반영). 시간대별(TOU) 종별과는 결합되지 않습니다."
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
             "en": "Discount Settings",
             "ko": "할인 설정"
           },
@@ -1119,6 +1251,22 @@
         "en": "kWh"
       },
       "decimals": 2
+    },
+    "meter_kwh_generated": {
+      "type": "number",
+      "title": {
+        "en": "Generation (Exported)",
+        "ko": "이번달 발전량"
+      },
+      "units": {
+        "en": "kWh"
+      },
+      "decimals": 2,
+      "uiComponent": "sensor",
+      "icon": "/assets/kwh.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true
     },
     "meter_kwh_last_day": {
       "type": "number",

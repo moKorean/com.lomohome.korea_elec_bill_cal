@@ -1,0 +1,32 @@
+{
+  "id": "kwh_step_at_least",
+  "title": {
+    "en": "Progressive step is at least ...",
+    "ko": "누진 단계가 ... 이상이면"
+  },
+  "titleFormatted": {
+    "en": "Progressive step !{{is|is not}} at least step [[step]]",
+    "ko": "누진 단계가 [[step]] !{{이상이면|미만이면}}"
+  },
+  "hint": {
+    "en": "Checks whether the current progressive step is at or above the selected level. Step 4 is the winter/summer super-user (highest) rate.",
+    "ko": "현재 누진 단계가 선택한 단계 이상인지 확인합니다. 4단계는 하계·동계 슈퍼유저(최고) 요금입니다."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=korea_elec"
+    },
+    {
+      "type": "dropdown",
+      "name": "step",
+      "values": [
+        { "id": "1", "label": { "en": "Step 1", "ko": "1단계" } },
+        { "id": "2", "label": { "en": "Step 2", "ko": "2단계" } },
+        { "id": "3", "label": { "en": "Step 3", "ko": "3단계" } },
+        { "id": "4", "label": { "en": "Step 4 (super-user)", "ko": "4단계 (슈퍼유저)" } }
+      ]
+    }
+  ]
+}
