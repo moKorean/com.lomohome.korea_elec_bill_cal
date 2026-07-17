@@ -264,8 +264,8 @@
             "ko": "계약종별"
           },
           "hint": {
-            "en": "Your KEPCO contract type. 'Residential' uses the Voltage Type below. Non-residential types require Contract Power (kW) below, and the large-family/welfare discounts do not apply to them. Time-of-use tariffs are not listed because they need per-hour usage data the app cannot read.",
-            "ko": "한전 계약종별입니다. '주택용'은 아래 '전압 구분'을 사용합니다. 비주택용 종별은 아래 '계약전력(kW)' 입력이 필요하며, 대가족·복지 할인은 주택용에만 적용됩니다. 시간대별(경/중/최대부하) 요금제는 앱이 시간대별 사용량을 알 수 없어 목록에서 제외했습니다."
+            "en": "Your KEPCO contract type. 'Residential' uses the Voltage Type below. Non-residential types require Contract Power (kW) below, and the large-family/welfare discounts do not apply to them. Time-of-use (TOU) types (General(A)II, Industrial(A)II) are estimated by bucketing real-time usage into off/mid/peak periods from installation onward — accurate from the first full billing period after install.",
+            "ko": "한전 계약종별입니다. '주택용'은 아래 '전압 구분'을 사용합니다. 비주택용 종별은 아래 '계약전력(kW)' 입력이 필요하며, 대가족·복지 할인은 주택용에만 적용됩니다. 시간대별(TOU) 종별(일반용(갑)Ⅱ·산업용(갑)Ⅱ)은 설치 이후 실시간 사용량을 경/중/최대부하로 집계해 계산합니다(설치 후 첫 완전한 청구기간부터 정확)."
           },
           "value": "residential",
           "values": [
@@ -285,6 +285,14 @@
             { "id": "ind_gap1_highA_s2", "label": { "en": "Industrial (A) I - High A, Opt.II", "ko": "산업용(갑)Ⅰ 고압A 선택Ⅱ" } },
             { "id": "ind_gap1_highB_s1", "label": { "en": "Industrial (A) I - High B, Opt.I", "ko": "산업용(갑)Ⅰ 고압B 선택Ⅰ" } },
             { "id": "ind_gap1_highB_s2", "label": { "en": "Industrial (A) I - High B, Opt.II", "ko": "산업용(갑)Ⅰ 고압B 선택Ⅱ" } },
+            { "id": "general_gap2_highA_s1", "label": { "en": "General (A) II TOU - High A, Opt.I", "ko": "일반용(갑)Ⅱ 고압A 선택Ⅰ (시간대별)" } },
+            { "id": "general_gap2_highA_s2", "label": { "en": "General (A) II TOU - High A, Opt.II", "ko": "일반용(갑)Ⅱ 고압A 선택Ⅱ (시간대별)" } },
+            { "id": "general_gap2_highB_s1", "label": { "en": "General (A) II TOU - High B, Opt.I", "ko": "일반용(갑)Ⅱ 고압B 선택Ⅰ (시간대별)" } },
+            { "id": "general_gap2_highB_s2", "label": { "en": "General (A) II TOU - High B, Opt.II", "ko": "일반용(갑)Ⅱ 고압B 선택Ⅱ (시간대별)" } },
+            { "id": "ind_gap2_highA_s1", "label": { "en": "Industrial (A) II TOU - High A, Opt.I", "ko": "산업용(갑)Ⅱ 고압A 선택Ⅰ (시간대별)" } },
+            { "id": "ind_gap2_highA_s2", "label": { "en": "Industrial (A) II TOU - High A, Opt.II", "ko": "산업용(갑)Ⅱ 고압A 선택Ⅱ (시간대별)" } },
+            { "id": "ind_gap2_highB_s1", "label": { "en": "Industrial (A) II TOU - High B, Opt.I", "ko": "산업용(갑)Ⅱ 고압B 선택Ⅰ (시간대별)" } },
+            { "id": "ind_gap2_highB_s2", "label": { "en": "Industrial (A) II TOU - High B, Opt.II", "ko": "산업용(갑)Ⅱ 고압B 선택Ⅱ (시간대별)" } },
             { "id": "farm_gap", "label": { "en": "Agricultural (A)", "ko": "농사용(갑)" } },
             { "id": "farm_eul_low", "label": { "en": "Agricultural (B) - Low", "ko": "농사용(을) 저압" } },
             { "id": "farm_eul_high", "label": { "en": "Agricultural (B) - High", "ko": "농사용(을) 고압" } },

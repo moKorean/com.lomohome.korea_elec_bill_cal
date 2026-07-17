@@ -157,5 +157,17 @@
         "farm_eul_high": { "basic": 1210, "kwh": { "summer": 68.6, "spring_fall": 66.6, "winter": 68.6 } },
 
         "night_gap":     { "basic": 0, "kwh": { "summer": 82.1, "spring_fall": 82.1, "winter": 103.5 }, "minKwh": 20 }
+    },
+    "_TARIFF_TOU_COMMENT": "시간대별(경부하/중간부하/최대부하) 요금 종별. KEPCO 2026-06-01 시행. basic=기본요금(원/kW). off/mid/peak=계절별 시간대 전력량요금(원/kWh). 시간대 구분: 경부하 22-08시(전계절); 여름·봄가을 중간 08-15·21-22시/최대 15-21시; 겨울 중간 08-09·12-16·19-22시/최대 09-12·16-19시. 기후환경·연료비는 PRICE_ADJUSTMENT 재사용.",
+    "TARIFF_TOU": {
+        "general_gap2_highA_s1": { "basic": 7170, "off": { "summer": 89.4, "spring_fall": 89.4, "winter": 98.1 }, "mid": { "summer": 140.6, "spring_fall": 96.8,  "winter": 128.5 }, "peak": { "summer": 163.1, "spring_fall": 108.1, "winter": 143.3 } },
+        "general_gap2_highA_s2": { "basic": 8230, "off": { "summer": 84.1, "spring_fall": 84.1, "winter": 92.8 }, "mid": { "summer": 135.3, "spring_fall": 91.5,  "winter": 123.2 }, "peak": { "summer": 157.8, "spring_fall": 102.8, "winter": 138.0 } },
+        "general_gap2_highB_s1": { "basic": 7170, "off": { "summer": 88.8, "spring_fall": 88.8, "winter": 97.8 }, "mid": { "summer": 137.4, "spring_fall": 94.7,  "winter": 125.1 }, "peak": { "summer": 153.8, "spring_fall": 100.1, "winter": 139.3 } },
+        "general_gap2_highB_s2": { "basic": 8230, "off": { "summer": 83.5, "spring_fall": 83.5, "winter": 92.5 }, "mid": { "summer": 132.1, "spring_fall": 89.4,  "winter": 119.8 }, "peak": { "summer": 148.5, "spring_fall": 94.8,  "winter": 134.0 } },
+
+        "ind_gap2_highA_s1": { "basic": 6490, "off": { "summer": 95.7, "spring_fall": 95.7, "winter": 103.1 }, "mid": { "summer": 121.5, "spring_fall": 100.5, "winter": 120.0 }, "peak": { "summer": 155.0, "spring_fall": 119.7, "winter": 149.4 } },
+        "ind_gap2_highA_s2": { "basic": 7470, "off": { "summer": 90.8, "spring_fall": 90.8, "winter": 98.2 },  "mid": { "summer": 116.6, "spring_fall": 95.6,  "winter": 115.1 }, "peak": { "summer": 150.1, "spring_fall": 114.8, "winter": 144.5 } },
+        "ind_gap2_highB_s1": { "basic": 6000, "off": { "summer": 92.5, "spring_fall": 92.5, "winter": 99.7 },  "mid": { "summer": 120.1, "spring_fall": 99.1,  "winter": 117.7 }, "peak": { "summer": 153.9, "spring_fall": 117.9, "winter": 146.4 } },
+        "ind_gap2_highB_s2": { "basic": 6900, "off": { "summer": 88.0, "spring_fall": 88.0, "winter": 95.2 },  "mid": { "summer": 115.6, "spring_fall": 94.6,  "winter": 113.2 }, "peak": { "summer": 149.4, "spring_fall": 113.4, "winter": 141.9 } }
     }
 }

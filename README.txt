@@ -12,9 +12,10 @@ SUPPORTED CONTRACT TYPES
 Besides Residential, flat (seasonal single-rate) contract types are supported. Non-residential types require a Contract Power (kW) setting.
 - Residential (Low / High) - progressive
 - General (A) I, Education (A), Industrial (A) I (Low / High A,B, Option I,II)
-- Agricultural (A), Agricultural (B)
-- Off-peak (A)
-* Time-of-use tariffs are not supported because they need per-hour usage data.
+- Agricultural (A), Agricultural (B), Off-peak (A)
+- General (A) II, Industrial (A) II - time-of-use (real-time off/mid/peak bucketing)
+* Time-of-use types are accurate from the first full billing period after install (approximated from meter report timing).
+* 300 kW+ (type B) tariffs and Off-peak (B) are not yet supported.
 
 DISCOUNTS (Residential only)
 - Large family discount (5+ members, newborn household, 3+ children, life-support equipment)

@@ -45,9 +45,28 @@ class KoreaElecDevice extends Device {
         bigfamDcCfg: parseInt(this.settings.bigfam_dc, 10) || 0,
         welfareDcCfg: parseInt(this.settings.welfare_dc, 10) || 0,
       });
+      this.tariffIsTou = this.calculator.isTouTariff();
     } catch (error) {
       this.error('Failed to initialize calculator:', error);
     }
+  }
+
+  /**
+   * Time-of-use load period for a given local time (시간대 판정).
+   * 경부하(off) 22-08시(전계절); 여름·봄가을 최대(peak) 15-21시, 그 외 중간(mid);
+   * 겨울 최대 09-12·16-19시, 그 외 중간.
+   */
+  touPeriod(nowLocal) {
+    const h = nowLocal.getHours();
+    const m = nowLocal.getMonth() + 1;
+    const winter = [11, 12, 1, 2].includes(m);
+    if (h >= 22 || h < 8) return 'off';
+    if (winter) {
+      if ((h >= 9 && h < 12) || (h >= 16 && h < 19)) return 'peak';
+      return 'mid';
+    }
+    if (h >= 15 && h < 21) return 'peak';
+    return 'mid';
   }
 
   async initMeterValues() {
@@ -80,6 +99,11 @@ class KoreaElecDevice extends Device {
     // Store current bill and step for flow triggers
     this.currentMonthBill = 0;
     this.currentKwhStep = await this.getStoreValue('currentKwhStep') || 1;
+
+    // TOU (시간대별) load-period accumulators for this billing period
+    this.touOffKwh = await this.getStoreValue('touOffKwh') || 0;
+    this.touMidKwh = await this.getStoreValue('touMidKwh') || 0;
+    this.touPeakKwh = await this.getStoreValue('touPeakKwh') || 0;
   }
 
   async setupSourceDevice() {
@@ -215,9 +239,12 @@ class KoreaElecDevice extends Device {
       this.lastMonthUsage = Math.max(0, this.lastMeterValue - this.monthStartMeter);
       await this.setStoreValue('lastMonthUsage', this.lastMonthUsage);
 
-      // Calculate and save last month's bill before resetting
+      // Calculate and save last month's bill before resetting (TOU buckets still
+      // hold the just-completed period at this point).
       if (this.lastMonthUsage > 0) {
-        const lastMonthBillResult = this.calculator.getSimpleBill(this.lastMonthUsage);
+        const lastMonthBillResult = this.calculator.getSimpleBill(this.lastMonthUsage, {
+          off: this.touOffKwh, mid: this.touMidKwh, peak: this.touPeakKwh,
+        });
         this.lastMonthBill = lastMonthBillResult.total;
         await this.setStoreValue('lastMonthBill', this.lastMonthBill);
         this.yearAccumulatedBill += lastMonthBillResult.total;
@@ -229,16 +256,41 @@ class KoreaElecDevice extends Device {
       this.lastBillingPeriod = currentBillingPeriod;
       await this.setStoreValue('lastBillingPeriod', this.lastBillingPeriod);
       await this.setSettings({ meter_month_start: this.monthStartMeter }).catch(this.error);
+
+      // Reset TOU load-period accumulators at the start of the new billing period
+      this.touOffKwh = 0;
+      this.touMidKwh = 0;
+      this.touPeakKwh = 0;
+      await this.setStoreValue('touOffKwh', 0);
+      await this.setStoreValue('touMidKwh', 0);
+      await this.setStoreValue('touPeakKwh', 0);
     }
 
     // Calculate usage
     const monthUsage = Math.max(0, meterValue - this.monthStartMeter);
     const yearUsage = Math.max(0, meterValue - this.yearStartMeter);
 
+    // TOU (시간대별) bucketing: attribute consumption since the last reading to
+    // the current load period. Only tracked for time-of-use tariffs.
+    if (this.tariffIsTou) {
+      const touDelta = meterValue - this.lastMeterValue;
+      if (touDelta > 0) {
+        const period = this.touPeriod(nowLocal);
+        if (period === 'peak') this.touPeakKwh += touDelta;
+        else if (period === 'mid') this.touMidKwh += touDelta;
+        else this.touOffKwh += touDelta;
+        await this.setStoreValue('touPeakKwh', this.touPeakKwh);
+        await this.setStoreValue('touMidKwh', this.touMidKwh);
+        await this.setStoreValue('touOffKwh', this.touOffKwh);
+      }
+    }
+
     // Calculate bill using Korean progressive rate
     try {
       this.initCalculator(); // Re-init with current date
-      const billResult = this.calculator.getSimpleBill(monthUsage);
+      const billResult = this.calculator.getSimpleBill(monthUsage, {
+        off: this.touOffKwh, mid: this.touMidKwh, peak: this.touPeakKwh,
+      });
 
       // Update capabilities
       await this.setCapabilityValue('meter_power', meterValue).catch(this.error);
@@ -492,10 +544,22 @@ class KoreaElecDevice extends Device {
     const dailyAverage = currentMonthUsage / elapsedDays;
     const kwhForecast = dailyAverage * totalDays;
 
-    // Calculate forecast bill using the calculator
+    // Calculate forecast bill using the calculator. For TOU tariffs, scale the
+    // current load-period buckets up to the forecast total (assumes the same
+    // load-period mix continues for the rest of the period).
     let moneyForecast = 0;
     try {
-      const forecastBill = this.calculator.getSimpleBill(kwhForecast);
+      let touForecast = null;
+      if (this.tariffIsTou) {
+        const touTotal = this.touOffKwh + this.touMidKwh + this.touPeakKwh;
+        const scale = touTotal > 0 ? kwhForecast / touTotal : 0;
+        touForecast = {
+          off: this.touOffKwh * scale,
+          mid: this.touMidKwh * scale,
+          peak: this.touPeakKwh * scale,
+        };
+      }
+      const forecastBill = this.calculator.getSimpleBill(kwhForecast, touForecast);
       moneyForecast = forecastBill.total;
     } catch (error) {
       this.error('Failed to calculate forecast bill:', error);
