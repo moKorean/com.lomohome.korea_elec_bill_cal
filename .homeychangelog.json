@@ -1,4 +1,8 @@
 {
+  "1.4.1": {
+    "en": "Real-time KEPCO electricity bill estimation from any energy meter. Supports residential progressive rates plus general, educational, industrial, agricultural and off-peak contract types (including time-of-use). Includes sensors for current and forecast cost/usage, progressive step, budget, load period and CO2, with flow triggers and conditions for automation.",
+    "ko": "전력 미터를 이용한 실시간 한국전력(KEPCO) 전기요금 계산. 주택용 누진제와 일반·교육·산업·농사·심야 계약종별(시간대별 포함)을 지원합니다. 이번달·예상 요금/사용량, 누진 단계, 예산, 부하시간대, 탄소 배출량 센서와 자동화용 플로우 트리거·조건을 제공합니다."
+  },
   "1.4.0": {
     "en": "Add non-residential contract types (General(A)I/II, Education(A), Industrial(A)I/II, Agricultural(A)/(B), Off-peak(A)) with Contract Power (kW); time-of-use types bucket real-time usage into off/mid/peak periods. New sensors: Budget Usage %, Current Load Period, CO2 Emissions, vs Yesterday, Generation (exported). New flow cards: monthly budget + 'forecast exceeds budget' trigger, 'new billing period' trigger, 'cost rises above amount' trigger, 'current load period' condition, 'progressive step increased' trigger, 'progressive step at least N' condition. Manual climate/fuel-adjustment rates (built-in auto by default), solar net-metering (subtract exported energy). Rename sensor titles, clarify labels, report 0 W live power.",
     "ko": "비주택용 계약종별을 추가했습니다 (일반용(갑)Ⅰ·Ⅱ, 교육용(갑), 산업용(갑)Ⅰ·Ⅱ, 농사용(갑)·(을), 심야전력(갑)) — 계약전력(kW) 포함, 시간대별(TOU) 종별은 실시간 부하시간대(경/중/최대) 집계. 새 센서: 예산 대비(%), 현재 부하시간대, 탄소 배출량, 전일 대비, 이번달 발전량. 새 플로우: 월 목표 예산 설정 + '예상 요금 예산 초과' 트리거, '새 청구기간 시작' 트리거, '이번달 요금 금액 초과' 트리거, '현재 부하시간대' 조건, '누진 단계 상승' 트리거, '누진 단계 N 이상' 조건. 기후환경·연료비조정 단가 수동 설정(기본은 내장 자동), 태양광 상계(송전량 차감) 옵션 추가. 센서 이름 정리 및 안내 개선, 가상 기기 실시간 소비전력 0W."
