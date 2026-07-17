@@ -42,8 +42,9 @@
     "homey:manager:api"
   ],
   "images": {
-    "large": "/assets/images/large.jpg",
-    "small": "/assets/images/small.jpg"
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
   },
   "author": {
     "name": "Geunwon Mo",

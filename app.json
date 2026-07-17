@@ -43,8 +43,9 @@
     "homey:manager:api"
   ],
   "images": {
-    "large": "/assets/images/large.jpg",
-    "small": "/assets/images/small.jpg"
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
   },
   "author": {
     "name": "Geunwon Mo",
@@ -581,8 +582,9 @@
         }
       },
       "images": {
-        "large": "/drivers/korea_elec/assets/images/large.jpg",
-        "small": "/drivers/korea_elec/assets/images/small.jpg"
+        "small": "/drivers/korea_elec/assets/images/small.png",
+        "large": "/drivers/korea_elec/assets/images/large.png",
+        "xlarge": "/drivers/korea_elec/assets/images/xlarge.png"
       },
       "pair": [
         {

@@ -184,8 +184,9 @@
     }
   },
   "images": {
-    "large": "/drivers/korea_elec/assets/images/large.jpg",
-    "small": "/drivers/korea_elec/assets/images/small.jpg"
+    "small": "/drivers/korea_elec/assets/images/small.png",
+    "large": "/drivers/korea_elec/assets/images/large.png",
+    "xlarge": "/drivers/korea_elec/assets/images/xlarge.png"
   },
   "pair": [
     {
