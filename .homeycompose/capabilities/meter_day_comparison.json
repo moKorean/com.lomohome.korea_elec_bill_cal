@@ -1,0 +1,16 @@
+{
+  "type": "number",
+  "title": {
+    "en": "vs Yesterday",
+    "ko": "전일 대비"
+  },
+  "units": {
+    "en": "%"
+  },
+  "decimals": 1,
+  "uiComponent": "sensor",
+  "icon": "/assets/trending.svg",
+  "getable": true,
+  "setable": false,
+  "insights": false
+}

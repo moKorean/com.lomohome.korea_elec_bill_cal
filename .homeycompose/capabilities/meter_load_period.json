@@ -1,0 +1,17 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Current Load Period",
+    "ko": "현재 부하시간대"
+  },
+  "uiComponent": "sensor",
+  "icon": "/assets/clock.svg",
+  "getable": true,
+  "setable": false,
+  "insights": false,
+  "values": [
+    { "id": "off", "title": { "en": "Off-peak", "ko": "경부하" } },
+    { "id": "mid", "title": { "en": "Mid-peak", "ko": "중간부하" } },
+    { "id": "peak", "title": { "en": "On-peak", "ko": "최대부하" } }
+  ]
+}

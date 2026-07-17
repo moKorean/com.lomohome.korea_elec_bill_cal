@@ -1,0 +1,29 @@
+{
+  "id": "money_exceeds_trigger",
+  "title": {
+    "en": "This month cost rises above amount",
+    "ko": "이번달 요금이 금액을 초과하면"
+  },
+  "titleFormatted": {
+    "en": "This month cost rises above [[amount]] won",
+    "ko": "이번달 사용량 요금이 [[amount]]원을 초과하면"
+  },
+  "hint": {
+    "en": "Triggers when this month's cost first rises above the given amount.",
+    "ko": "이번달 사용량 요금이 지정한 금액을 처음으로 넘어설 때 실행됩니다."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=korea_elec"
+    },
+    {
+      "type": "number",
+      "name": "amount",
+      "title": { "en": "Amount (won)", "ko": "금액 (원)" },
+      "min": 0,
+      "step": 1000
+    }
+  ]
+}

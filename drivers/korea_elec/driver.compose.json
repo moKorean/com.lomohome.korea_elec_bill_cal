@@ -11,17 +11,21 @@
   },
   "capabilities": [
     "meter_money_this_month",
+    "meter_money_forecast",
     "meter_kwh_this_month",
+    "meter_kwh_forecast",
     "kwh_step",
     "meter_tariff",
+    "meter_load_period",
+    "meter_budget_pct",
     "meter_kwh_this_hour",
     "meter_kwh_last_hour",
     "meter_kwh_today",
+    "meter_day_comparison",
     "meter_kwh_last_day",
     "meter_kwh_daily_avg",
     "meter_month_comparison",
-    "meter_kwh_forecast",
-    "meter_money_forecast",
+    "meter_co2",
     "meter_kwh_last_month",
     "meter_money_last_month",
     "meter_kwh_this_year",
@@ -342,6 +346,21 @@
           "value": 0,
           "min": 0,
           "decimals": 1
+        },
+        {
+          "id": "budget_won",
+          "type": "number",
+          "label": {
+            "en": "Monthly Budget (won)",
+            "ko": "월 목표 예산 (원)"
+          },
+          "hint": {
+            "en": "Optional. Sets a monthly bill budget. The 'Budget Usage' sensor shows this-month-cost/budget %, and the 'forecast exceeds budget' flow trigger fires when the month-end forecast rises above it. 0 disables it.",
+            "ko": "선택 사항. 월 요금 목표 예산을 설정합니다. '예산 대비' 센서가 이번달 사용량 요금/예산 비율(%)을 표시하고, '예상 요금이 예산 초과' 플로우 트리거(월말 전망 기준)가 실행됩니다. 0이면 비활성화."
+          },
+          "value": 0,
+          "min": 0,
+          "step": 1000
         }
       ]
     },

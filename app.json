@@ -70,6 +70,44 @@
   "flow": {
     "triggers": [
       {
+        "id": "budget_exceeded",
+        "title": {
+          "en": "Forecast bill exceeds monthly budget",
+          "ko": "예상 요금이 목표 예산을 초과하면"
+        },
+        "hint": {
+          "en": "Triggers when this month's forecast bill first rises above the monthly budget set in device settings.",
+          "ko": "이번달 예상 요금이 디바이스 설정의 월 목표 예산을 처음으로 넘어설 때 실행됩니다."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=korea_elec"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "forecast",
+            "type": "number",
+            "title": {
+              "en": "Forecast bill (won)",
+              "ko": "예상 요금"
+            },
+            "example": 52000
+          },
+          {
+            "name": "budget",
+            "type": "number",
+            "title": {
+              "en": "Monthly budget (won)",
+              "ko": "월 목표 예산"
+            },
+            "example": 50000
+          }
+        ]
+      },
+      {
         "id": "kwh_step_changed",
         "title": {
           "en": "Progressive step changed",
@@ -144,9 +182,128 @@
             "example": 2
           }
         ]
+      },
+      {
+        "id": "money_exceeds_trigger",
+        "title": {
+          "en": "This month cost rises above amount",
+          "ko": "이번달 요금이 금액을 초과하면"
+        },
+        "titleFormatted": {
+          "en": "This month cost rises above [[amount]] won",
+          "ko": "이번달 사용량 요금이 [[amount]]원을 초과하면"
+        },
+        "hint": {
+          "en": "Triggers when this month's cost first rises above the given amount.",
+          "ko": "이번달 사용량 요금이 지정한 금액을 처음으로 넘어설 때 실행됩니다."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=korea_elec"
+          },
+          {
+            "type": "number",
+            "name": "amount",
+            "title": {
+              "en": "Amount (won)",
+              "ko": "금액 (원)"
+            },
+            "min": 0,
+            "step": 1000
+          }
+        ]
+      },
+      {
+        "id": "new_billing_period",
+        "title": {
+          "en": "New billing period started",
+          "ko": "새 청구기간이 시작되면"
+        },
+        "hint": {
+          "en": "Triggers on the meter-reading day when a new billing period begins. Provides last period's usage and bill.",
+          "ko": "검침일에 새 청구기간이 시작될 때 실행됩니다. 지난 청구기간의 사용량과 요금을 제공합니다."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=korea_elec"
+          }
+        ],
+        "tokens": [
+          {
+            "name": "last_month_usage",
+            "type": "number",
+            "title": {
+              "en": "Last period usage (kWh)",
+              "ko": "지난 청구기간 사용량"
+            },
+            "example": 320
+          },
+          {
+            "name": "last_month_bill",
+            "type": "number",
+            "title": {
+              "en": "Last period bill (won)",
+              "ko": "지난 청구기간 요금"
+            },
+            "example": 45000
+          }
+        ]
       }
     ],
     "conditions": [
+      {
+        "id": "load_period_is",
+        "title": {
+          "en": "Current load period !{{is|is not}} ...",
+          "ko": "현재 부하시간대가 ...!{{이면|아니면}}"
+        },
+        "titleFormatted": {
+          "en": "Current load period !{{is|is not}} [[period]]",
+          "ko": "현재 부하시간대가 [[period]] !{{이면|아니면}}"
+        },
+        "hint": {
+          "en": "Checks the current time-of-use load period (off/mid/on-peak). Useful to shift heavy appliances to off-peak hours.",
+          "ko": "현재 시간대의 부하 구분(경/중/최대부하)을 확인합니다. 고전력 기기를 경부하 시간대로 미루는 자동화에 유용합니다."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=korea_elec"
+          },
+          {
+            "type": "dropdown",
+            "name": "period",
+            "values": [
+              {
+                "id": "off",
+                "label": {
+                  "en": "Off-peak",
+                  "ko": "경부하"
+                }
+              },
+              {
+                "id": "mid",
+                "label": {
+                  "en": "Mid-peak",
+                  "ko": "중간부하"
+                }
+              },
+              {
+                "id": "peak",
+                "label": {
+                  "en": "On-peak",
+                  "ko": "최대부하"
+                }
+              }
+            ]
+          }
+        ]
+      },
       {
         "id": "money_exceeds",
         "title": {
@@ -195,17 +352,21 @@
       },
       "capabilities": [
         "meter_money_this_month",
+        "meter_money_forecast",
         "meter_kwh_this_month",
+        "meter_kwh_forecast",
         "kwh_step",
         "meter_tariff",
+        "meter_load_period",
+        "meter_budget_pct",
         "meter_kwh_this_hour",
         "meter_kwh_last_hour",
         "meter_kwh_today",
+        "meter_day_comparison",
         "meter_kwh_last_day",
         "meter_kwh_daily_avg",
         "meter_month_comparison",
-        "meter_kwh_forecast",
-        "meter_money_forecast",
+        "meter_co2",
         "meter_kwh_last_month",
         "meter_money_last_month",
         "meter_kwh_this_year",
@@ -694,6 +855,21 @@
               "value": 0,
               "min": 0,
               "decimals": 1
+            },
+            {
+              "id": "budget_won",
+              "type": "number",
+              "label": {
+                "en": "Monthly Budget (won)",
+                "ko": "월 목표 예산 (원)"
+              },
+              "hint": {
+                "en": "Optional. Sets a monthly bill budget. The 'Budget Usage' sensor shows this-month-cost/budget %, and the 'forecast exceeds budget' flow trigger fires when the month-end forecast rises above it. 0 disables it.",
+                "ko": "선택 사항. 월 요금 목표 예산을 설정합니다. '예산 대비' 센서가 이번달 사용량 요금/예산 비율(%)을 표시하고, '예상 요금이 예산 초과' 플로우 트리거(월말 전망 기준)가 실행됩니다. 0이면 비활성화."
+              },
+              "value": 0,
+              "min": 0,
+              "step": 1000
             }
           ]
         },
@@ -864,6 +1040,54 @@
       "max": 4,
       "decimals": 0
     },
+    "meter_budget_pct": {
+      "type": "number",
+      "title": {
+        "en": "Budget Usage",
+        "ko": "예산 대비"
+      },
+      "units": {
+        "en": "%"
+      },
+      "decimals": 0,
+      "uiComponent": "sensor",
+      "icon": "/assets/money.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true
+    },
+    "meter_co2": {
+      "type": "number",
+      "title": {
+        "en": "CO2 Emissions",
+        "ko": "탄소 배출량"
+      },
+      "units": {
+        "en": "kg"
+      },
+      "decimals": 1,
+      "uiComponent": "sensor",
+      "icon": "/assets/activity.svg",
+      "getable": true,
+      "setable": false,
+      "insights": true
+    },
+    "meter_day_comparison": {
+      "type": "number",
+      "title": {
+        "en": "vs Yesterday",
+        "ko": "전일 대비"
+      },
+      "units": {
+        "en": "%"
+      },
+      "decimals": 1,
+      "uiComponent": "sensor",
+      "icon": "/assets/trending.svg",
+      "getable": true,
+      "setable": false,
+      "insights": false
+    },
     "meter_kwh_daily_avg": {
       "type": "number",
       "title": {
@@ -1029,6 +1253,41 @@
         "en": "kWh"
       },
       "decimals": 2
+    },
+    "meter_load_period": {
+      "type": "enum",
+      "title": {
+        "en": "Current Load Period",
+        "ko": "현재 부하시간대"
+      },
+      "uiComponent": "sensor",
+      "icon": "/assets/clock.svg",
+      "getable": true,
+      "setable": false,
+      "insights": false,
+      "values": [
+        {
+          "id": "off",
+          "title": {
+            "en": "Off-peak",
+            "ko": "경부하"
+          }
+        },
+        {
+          "id": "mid",
+          "title": {
+            "en": "Mid-peak",
+            "ko": "중간부하"
+          }
+        },
+        {
+          "id": "peak",
+          "title": {
+            "en": "On-peak",
+            "ko": "최대부하"
+          }
+        }
+      ]
     },
     "meter_money_forecast": {
       "type": "number",

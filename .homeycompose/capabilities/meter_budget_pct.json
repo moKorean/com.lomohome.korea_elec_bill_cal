@@ -1,0 +1,16 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Budget Usage",
+    "ko": "예산 대비"
+  },
+  "units": {
+    "en": "%"
+  },
+  "decimals": 0,
+  "uiComponent": "sensor",
+  "icon": "/assets/money.svg",
+  "getable": true,
+  "setable": false,
+  "insights": true
+}

@@ -20,6 +20,9 @@ class KoreaElecDevice extends Device {
     this.settings = this.getSettings();
     this.timeZone = this.homey.clock.getTimezone();
 
+    // Add any capabilities introduced after this device was paired
+    await this.ensureCapabilities();
+
     // Initialize calculator
     this.initCalculator();
 
@@ -30,6 +33,20 @@ class KoreaElecDevice extends Device {
     await this.setupSourceDevice();
 
     this.log(`Device ${this.getName()} is ready`);
+  }
+
+  /**
+   * Add capabilities defined on the driver that a previously-paired device is
+   * missing (Homey does not add new capabilities to existing devices on update).
+   */
+  async ensureCapabilities() {
+    const manifestCaps = (this.driver.manifest && this.driver.manifest.capabilities) || [];
+    for (const cap of manifestCaps) {
+      if (!this.hasCapability(cap)) {
+        await this.addCapability(cap).catch(this.error);
+        this.log(`Added missing capability: ${cap}`);
+      }
+    }
   }
 
   initCalculator() {
@@ -104,6 +121,10 @@ class KoreaElecDevice extends Device {
     this.touOffKwh = await this.getStoreValue('touOffKwh') || 0;
     this.touMidKwh = await this.getStoreValue('touMidKwh') || 0;
     this.touPeakKwh = await this.getStoreValue('touPeakKwh') || 0;
+
+    // Day-over-day comparison + budget-exceeded edge state
+    this.dayBeforeUsage = await this.getStoreValue('dayBeforeUsage') || 0;
+    this.budgetExceededFired = false;
   }
 
   async setupSourceDevice() {
@@ -206,6 +227,9 @@ class KoreaElecDevice extends Device {
     // Check for new day
     if (nowLocal.getDate() !== this.lastReadingDay.day) {
       this.log('New day detected');
+      // Yesterday's total becomes the "day before" for day-over-day comparison
+      this.dayBeforeUsage = this.lastDayUsage;
+      await this.setStoreValue('dayBeforeUsage', this.dayBeforeUsage);
       // Save last day usage
       this.lastDayUsage = Math.max(0, this.lastMeterValue - this.dayStartMeter);
       await this.setStoreValue('lastDayUsage', this.lastDayUsage);
@@ -251,6 +275,12 @@ class KoreaElecDevice extends Device {
         await this.setStoreValue('yearAccumulatedBill', this.yearAccumulatedBill);
         this.log(`Added last month bill: ${lastMonthBillResult.total}, Year total: ${this.yearAccumulatedBill}`);
       }
+
+      // Notify flows that a new billing period has started (last period's totals)
+      await this.driver.triggerNewBillingPeriod(this, {
+        last_month_usage: Math.round(this.lastMonthUsage * 10) / 10,
+        last_month_bill: Math.round(this.lastMonthBill),
+      });
 
       this.monthStartMeter = this.lastMeterValue;
       this.lastBillingPeriod = currentBillingPeriod;
@@ -313,6 +343,18 @@ class KoreaElecDevice extends Device {
       const comparison = this.calculateMonthComparison(monthUsage);
       await this.setCapabilityValue('meter_month_comparison', Math.round(comparison * 10) / 10).catch(this.error);
 
+      // Current load period (경/중/최대부하)
+      await this.setCapabilityValue('meter_load_period', this.touPeriod(nowLocal)).catch(this.error);
+
+      // CO2 emissions estimate (국가 전력 배출계수 약 0.4594 kgCO2/kWh)
+      await this.setCapabilityValue('meter_co2', Math.round(monthUsage * 0.4594 * 10) / 10).catch(this.error);
+
+      // Day-over-day comparison (어제 vs 그저께)
+      if (this.dayBeforeUsage > 0) {
+        const dayComp = ((this.lastDayUsage - this.dayBeforeUsage) / this.dayBeforeUsage) * 100;
+        await this.setCapabilityValue('meter_day_comparison', Math.round(dayComp * 10) / 10).catch(this.error);
+      }
+
       await this.setCapabilityValue('meter_kwh_last_month', Math.round(this.lastMonthUsage * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_money_last_month', Math.round(this.lastMonthBill)).catch(this.error);
       await this.setCapabilityValue('meter_money_this_month', Math.round(billResult.total)).catch(this.error);
@@ -338,8 +380,13 @@ class KoreaElecDevice extends Device {
 
       await this.setCapabilityValue('kwh_step', newStep).catch(this.error);
 
-      // Store current bill for condition check
+      // Store current bill for condition check + fire "cost rises above amount"
+      // trigger (edge-triggered per flow's amount via the run listener).
+      const oldBill = this.currentMonthBill;
       this.currentMonthBill = billResult.total;
+      if (billResult.total > oldBill) {
+        await this.driver.triggerMoneyExceeds(this, {}, { oldBill, newBill: billResult.total });
+      }
 
       // Calculate average tariff (or show base rate if no usage yet)
       if (monthUsage > 0) {
@@ -359,6 +406,20 @@ class KoreaElecDevice extends Device {
       const forecast = this.calculateForecast(monthUsage, nowLocal);
       await this.setCapabilityValue('meter_kwh_forecast', Math.round(forecast.kwhForecast * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_money_forecast', Math.round(forecast.moneyForecast)).catch(this.error);
+
+      // Budget: usage % of monthly budget + edge-triggered "forecast exceeds budget"
+      const budget = this.settings.budget_won || 0;
+      if (budget > 0) {
+        // 예산 대비(%): 이번달 사용량 요금(현재까지 지출) 기준
+        await this.setCapabilityValue('meter_budget_pct', Math.round((billResult.total / budget) * 100)).catch(this.error);
+        // 예산 초과 트리거: 예상 요금(월말 전망) 기준 — 조기 경고
+        if (forecast.moneyForecast > budget && !this.budgetExceededFired) {
+          this.budgetExceededFired = true;
+          await this.driver.triggerBudgetExceeded(this, { forecast: Math.round(forecast.moneyForecast), budget });
+        } else if (forecast.moneyForecast <= budget) {
+          this.budgetExceededFired = false;
+        }
+      }
 
     } catch (error) {
       this.error('Failed to calculate bill:', error);

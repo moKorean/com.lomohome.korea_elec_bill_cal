@@ -32,10 +32,13 @@ SENSORS
 - Last month's usage and bill
 - Year-to-date usage and accumulated cost
 
+EXTRA SENSORS
+- Budget usage (%), current load period (off/mid/on-peak), CO2 emissions (kg), vs yesterday (%)
+
 FLOW AUTOMATION
-- Trigger: progressive step changed (e.g. step 1 -> step 2)
-- Trigger: progressive step increased (only when it goes up)
-- Condition: this month's cost exceeds a given amount
+- Triggers: progressive step changed / step increased / new billing period / forecast exceeds budget / cost rises above amount
+- Conditions: this month's cost exceeds an amount / current load period (off/mid/on-peak)
+- Setting: monthly budget (won) drives the budget-usage sensor and trigger
 
 SETUP
 1. Add the device and select a power meter device that has the "meter_power" capability as the source.

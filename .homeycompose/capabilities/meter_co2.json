@@ -1,0 +1,16 @@
+{
+  "type": "number",
+  "title": {
+    "en": "CO2 Emissions",
+    "ko": "탄소 배출량"
+  },
+  "units": {
+    "en": "kg"
+  },
+  "decimals": 1,
+  "uiComponent": "sensor",
+  "icon": "/assets/activity.svg",
+  "getable": true,
+  "setable": false,
+  "insights": true
+}

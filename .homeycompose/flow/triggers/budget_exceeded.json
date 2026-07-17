@@ -1,0 +1,32 @@
+{
+  "id": "budget_exceeded",
+  "title": {
+    "en": "Forecast bill exceeds monthly budget",
+    "ko": "예상 요금이 목표 예산을 초과하면"
+  },
+  "hint": {
+    "en": "Triggers when this month's forecast bill first rises above the monthly budget set in device settings.",
+    "ko": "이번달 예상 요금이 디바이스 설정의 월 목표 예산을 처음으로 넘어설 때 실행됩니다."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=korea_elec"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "forecast",
+      "type": "number",
+      "title": { "en": "Forecast bill (won)", "ko": "예상 요금" },
+      "example": 52000
+    },
+    {
+      "name": "budget",
+      "type": "number",
+      "title": { "en": "Monthly budget (won)", "ko": "월 목표 예산" },
+      "example": 50000
+    }
+  ]
+}

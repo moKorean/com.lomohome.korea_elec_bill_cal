@@ -1,0 +1,32 @@
+{
+  "id": "new_billing_period",
+  "title": {
+    "en": "New billing period started",
+    "ko": "새 청구기간이 시작되면"
+  },
+  "hint": {
+    "en": "Triggers on the meter-reading day when a new billing period begins. Provides last period's usage and bill.",
+    "ko": "검침일에 새 청구기간이 시작될 때 실행됩니다. 지난 청구기간의 사용량과 요금을 제공합니다."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=korea_elec"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "last_month_usage",
+      "type": "number",
+      "title": { "en": "Last period usage (kWh)", "ko": "지난 청구기간 사용량" },
+      "example": 320
+    },
+    {
+      "name": "last_month_bill",
+      "type": "number",
+      "title": { "en": "Last period bill (won)", "ko": "지난 청구기간 요금" },
+      "example": 45000
+    }
+  ]
+}

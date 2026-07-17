@@ -28,6 +28,51 @@ class KoreaElecDriver extends Driver {
         const { device, amount } = args;
         return device.currentMonthBill > amount;
       });
+
+    // New-billing-period and budget triggers (no args to match)
+    this.homey.flow.getDeviceTriggerCard('new_billing_period')
+      .registerRunListener(async () => true);
+    this.homey.flow.getDeviceTriggerCard('budget_exceeded')
+      .registerRunListener(async () => true);
+
+    // This-month cost rises above a per-flow amount (edge-triggered on crossing)
+    this.homey.flow.getDeviceTriggerCard('money_exceeds_trigger')
+      .registerRunListener(async (args, state) => state.oldBill <= args.amount && state.newBill > args.amount);
+
+    // Condition: current load period (경/중/최대부하) computed live
+    this.homey.flow.getConditionCard('load_period_is')
+      .registerRunListener(async (args) => {
+        const { device, period } = args;
+        const tz = device.timeZone || 'Asia/Seoul';
+        const nowLocal = new Date(new Date().toLocaleString('en-US', { timeZone: tz }));
+        return device.touPeriod(nowLocal) === period;
+      });
+  }
+
+  async triggerNewBillingPeriod(device, tokens) {
+    try {
+      await this.homey.flow.getDeviceTriggerCard('new_billing_period').trigger(device, tokens);
+      this.log(`Triggered new_billing_period: usage=${tokens.last_month_usage} bill=${tokens.last_month_bill}`);
+    } catch (error) {
+      this.error('Failed to trigger new_billing_period:', error);
+    }
+  }
+
+  async triggerBudgetExceeded(device, tokens) {
+    try {
+      await this.homey.flow.getDeviceTriggerCard('budget_exceeded').trigger(device, tokens);
+      this.log(`Triggered budget_exceeded: forecast=${tokens.forecast} budget=${tokens.budget}`);
+    } catch (error) {
+      this.error('Failed to trigger budget_exceeded:', error);
+    }
+  }
+
+  async triggerMoneyExceeds(device, tokens, state) {
+    try {
+      await this.homey.flow.getDeviceTriggerCard('money_exceeds_trigger').trigger(device, tokens, state);
+    } catch (error) {
+      this.error('Failed to trigger money_exceeds_trigger:', error);
+    }
   }
 
   async triggerKwhStepChanged(device, tokens) {
@@ -78,6 +123,7 @@ class KoreaElecDriver extends Driver {
               tariff_type: 'residential',
               pressure: 'low',
               contract_kw: 0,
+              budget_won: 0,
               bigfam_dc: '0',
               welfare_dc: '0',
               meter_total_start: 0,

@@ -1,0 +1,31 @@
+{
+  "id": "load_period_is",
+  "title": {
+    "en": "Current load period !{{is|is not}} ...",
+    "ko": "현재 부하시간대가 ...!{{이면|아니면}}"
+  },
+  "titleFormatted": {
+    "en": "Current load period !{{is|is not}} [[period]]",
+    "ko": "현재 부하시간대가 [[period]] !{{이면|아니면}}"
+  },
+  "hint": {
+    "en": "Checks the current time-of-use load period (off/mid/on-peak). Useful to shift heavy appliances to off-peak hours.",
+    "ko": "현재 시간대의 부하 구분(경/중/최대부하)을 확인합니다. 고전력 기기를 경부하 시간대로 미루는 자동화에 유용합니다."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device",
+      "filter": "driver_id=korea_elec"
+    },
+    {
+      "type": "dropdown",
+      "name": "period",
+      "values": [
+        { "id": "off", "label": { "en": "Off-peak", "ko": "경부하" } },
+        { "id": "mid", "label": { "en": "Mid-peak", "ko": "중간부하" } },
+        { "id": "peak", "label": { "en": "On-peak", "ko": "최대부하" } }
+      ]
+    }
+  ]
+}
