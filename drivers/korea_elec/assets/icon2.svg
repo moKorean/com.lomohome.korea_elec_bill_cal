@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 960" width="960" height="960">
+<style>
+  path, rect, line { fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; }
+  .o { stroke-width: 40; }
+  .d { stroke-width: 20; }
+  .s { stroke-width: 10; }
+</style>
+<g transform="translate(-50 0)">
+<path class="o" d="M 330 80 L 800 80 A 70 70 0 0 1 870 150 L 870 800 A 70 70 0 0 1 800 870 L 330 870 C 250 870, 190 840, 190 760 L 190 220 C 190 140, 250 80, 330 80 Z"/>
+<path class="d" d="M 322 86 C 285 98, 264 128, 264 170 L 264 780 C 264 822, 285 852, 322 864"/>
+<mask id="halo"><rect x="-100" y="-100" width="1200" height="1200" style="fill:#fff;stroke:none"/><path d="M 591 316 L 442 498 L 547 498 L 479 634 L 688 434 L 574 434 Z" style="fill:#000;stroke:#000;stroke-width:80;stroke-linejoin:round"/></mask>
+<g mask="url(#halo)"><rect x="330" y="145" width="470" height="190" rx="30" class="d"/>
+<line x1="272" y1="395" x2="858" y2="395" class="d"/>
+<path class="s" d="M 295 464 L 295 506"/>
+<path class="s" d="M 480 464 L 480 506"/>
+<path class="s" d="M 665 464 L 665 506"/>
+<path class="s" d="M 295 606 L 295 648"/>
+<path class="s" d="M 480 606 L 480 648"/>
+<path class="s" d="M 665 606 L 665 648"/>
+<path class="s" d="M 295 748 L 295 790"/>
+<path class="s" d="M 480 748 L 480 790"/>
+<rect x="315" y="440" width="130" height="90" rx="24" class="d"/>
+<rect x="500" y="440" width="130" height="90" rx="24" class="d"/>
+<rect x="685" y="440" width="130" height="90" rx="24" class="d"/>
+<rect x="315" y="582" width="130" height="90" rx="24" class="d"/>
+<rect x="500" y="582" width="130" height="90" rx="24" class="d"/>
+<rect x="685" y="582" width="130" height="90" rx="24" class="d"/>
+<rect x="315" y="724" width="130" height="90" rx="24" class="d"/>
+<rect x="500" y="724" width="315" height="90" rx="24" class="d"/></g>
+<path class="d" d="M 591 316 L 442 498 L 547 498 L 479 634 L 688 434 L 574 434 Z"/>
+</g>
+</svg>
