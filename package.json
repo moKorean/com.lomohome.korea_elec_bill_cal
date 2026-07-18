@@ -1,6 +1,6 @@
 {
   "name": "com.lomohome.korea_elec_bill_cal",
-  "version": "1.4.1",
+  "version": "1.4.3",
   "description": "Calculate Korean electricity bills based on KEPCO progressive rate system",
   "main": "app.js",
   "engines": {

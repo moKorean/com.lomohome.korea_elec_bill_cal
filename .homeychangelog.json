@@ -1,5 +1,5 @@
 {
-  "1.4.2": {
+  "1.4.3": {
     "en": "Fix the Current Rate sensor to show a fixed rate instead of a continuously changing average: the current progressive step's rate for residential, the seasonal rate for flat tariffs, and the current load period's rate for time-of-use tariffs.",
     "ko": "'현재 단가' 센서가 계속 변하는 평균값 대신 고정 단가를 표시하도록 수정했습니다. 주택용은 현재 누진 단계 단가, 정액 종별은 계절 단가, 시간대별 종별은 현재 부하시간대 단가를 표시합니다."
   },
