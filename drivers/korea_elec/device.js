@@ -429,11 +429,19 @@ class KoreaElecDevice extends Device {
         await this.driver.triggerMoneyExceeds(this, {}, { oldBill, newBill: billResult.total });
       }
 
-      // Current unit rate: the marginal energy rate of the current progressive
-      // step / seasonal rate (fixed per tier). Falls back to the average
-      // effective rate for time-of-use tariffs, which have no single rate.
+      // Current unit rate. Fixed-type tariffs (residential progressive, flat
+      // seasonal) report the current tier/seasonal rate. Time-of-use tariffs
+      // report the current load period's rate (fixed within the period, changes
+      // only by time of day). Average is a last-resort fallback.
       if (billResult.stepRate != null) {
         await this.setCapabilityValue('meter_tariff', billResult.stepRate).catch(this.error);
+      } else if (this.tariffIsTou) {
+        const touRate = this.calculator.getTouRate(this.touPeriod(nowLocal));
+        if (touRate != null) {
+          await this.setCapabilityValue('meter_tariff', touRate).catch(this.error);
+        } else if (monthUsage > 0) {
+          await this.setCapabilityValue('meter_tariff', Math.round((billResult.total / monthUsage) * 10) / 10).catch(this.error);
+        }
       } else if (monthUsage > 0) {
         const avgTariff = Math.round((billResult.total / monthUsage) * 10) / 10;
         await this.setCapabilityValue('meter_tariff', avgTariff).catch(this.error);

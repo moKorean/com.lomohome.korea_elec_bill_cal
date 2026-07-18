@@ -1,7 +1,7 @@
 {
   "1.4.2": {
-    "en": "Fix the Current Rate sensor to show the fixed per-tier rate of the current progressive step (or seasonal rate) instead of a continuously changing average.",
-    "ko": "'현재 단가' 센서가 계속 변하는 평균값 대신 현재 누진 단계(또는 계절)의 고정 단가를 표시하도록 수정했습니다."
+    "en": "Fix the Current Rate sensor to show a fixed rate instead of a continuously changing average: the current progressive step's rate for residential, the seasonal rate for flat tariffs, and the current load period's rate for time-of-use tariffs.",
+    "ko": "'현재 단가' 센서가 계속 변하는 평균값 대신 고정 단가를 표시하도록 수정했습니다. 주택용은 현재 누진 단계 단가, 정액 종별은 계절 단가, 시간대별 종별은 현재 부하시간대 단가를 표시합니다."
   },
   "1.4.1": {
     "en": "Real-time KEPCO electricity bill estimation from any energy meter. Supports residential progressive rates plus general, educational, industrial, agricultural and off-peak contract types (including time-of-use). Includes sensors for current and forecast cost/usage, progressive step, budget, load period and CO2, with flow triggers and conditions for automation.",
