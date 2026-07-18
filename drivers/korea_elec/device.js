@@ -429,14 +429,16 @@ class KoreaElecDevice extends Device {
         await this.driver.triggerMoneyExceeds(this, {}, { oldBill, newBill: billResult.total });
       }
 
-      // Calculate average tariff (or show base rate if no usage yet)
-      if (monthUsage > 0) {
+      // Current unit rate: the marginal energy rate of the current progressive
+      // step / seasonal rate (fixed per tier). Falls back to the average
+      // effective rate for time-of-use tariffs, which have no single rate.
+      if (billResult.stepRate != null) {
+        await this.setCapabilityValue('meter_tariff', billResult.stepRate).catch(this.error);
+      } else if (monthUsage > 0) {
         const avgTariff = Math.round((billResult.total / monthUsage) * 10) / 10;
         await this.setCapabilityValue('meter_tariff', avgTariff).catch(this.error);
       } else {
-        // Show first step rate when no usage
-        const baseRate = this.calculator.getFirstStepRate();
-        await this.setCapabilityValue('meter_tariff', baseRate).catch(this.error);
+        await this.setCapabilityValue('meter_tariff', this.calculator.getFirstStepRate()).catch(this.error);
       }
 
       // Calculate year total: accumulated past months + current month estimate

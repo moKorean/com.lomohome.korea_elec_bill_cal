@@ -1,4 +1,8 @@
 {
+  "1.4.2": {
+    "en": "Fix the Current Rate sensor to show the fixed per-tier rate of the current progressive step (or seasonal rate) instead of a continuously changing average.",
+    "ko": "'현재 단가' 센서가 계속 변하는 평균값 대신 현재 누진 단계(또는 계절)의 고정 단가를 표시하도록 수정했습니다."
+  },
   "1.4.1": {
     "en": "Real-time KEPCO electricity bill estimation from any energy meter. Supports residential progressive rates plus general, educational, industrial, agricultural and off-peak contract types (including time-of-use). Includes sensors for current and forecast cost/usage, progressive step, budget, load period and CO2, with flow triggers and conditions for automation.",
     "ko": "전력 미터를 이용한 실시간 한국전력(KEPCO) 전기요금 계산. 주택용 누진제와 일반·교육·산업·농사·심야 계약종별(시간대별 포함)을 지원합니다. 이번달·예상 요금/사용량, 누진 단계, 예산, 부하시간대, 탄소 배출량 센서와 자동화용 플로우 트리거·조건을 제공합니다."
@@ -22,8 +26,5 @@
   "1.0.0": {
     "en": "Initial release.",
     "ko": "최초 릴리스."
-  },
-  "1.4.2": {
-    "en": "Bug fix"
   }
 }
