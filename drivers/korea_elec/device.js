@@ -10,6 +10,7 @@
 
 const { Device } = require('homey');
 const KoreaElecBillCalculator = require('../../lib/KoreaElecBillCalculator');
+const { isPublicHoliday, lunarSupported } = require('../../lib/kr_holidays');
 
 class KoreaElecDevice extends Device {
 
@@ -26,6 +27,12 @@ class KoreaElecDevice extends Device {
     // Initialize calculator
     this.initCalculator();
 
+    // 음력 공휴일(설날·부처님오신날·추석) 계산은 런타임 ICU의 dangi 달력에 의존한다.
+    // 미지원이면 해당 날짜만 평일로 계량되므로 조용히 넘어가지 않고 남긴다.
+    if (this.tariffIsTou && !lunarSupported()) {
+      this.log('WARN: ICU dangi calendar unavailable — 음력 공휴일(설날·추석 등)은 평일로 계량됩니다');
+    }
+
     // Initialize meter values
     await this.initMeterValues();
 
@@ -36,17 +43,74 @@ class KoreaElecDevice extends Device {
   }
 
   /**
-   * Add capabilities defined on the driver that a previously-paired device is
-   * missing (Homey does not add new capabilities to existing devices on update).
+   * Sync an already-paired device's capability list with the driver manifest, so
+   * an app update surfaces new sensors without re-pairing the device.
+   *
+   * Homey never touches an existing device's capabilities on update, and
+   * addCapability() always appends — so manifest order is never applied by
+   * itself and a new sensor would land at the bottom of the list.
+   *
+   * removeCapability() discards that capability's Insights history, so the
+   * rebuild starts at the first position where the device diverges from the
+   * manifest; everything before that point is left untouched. The applied
+   * layout is stored, so a manifest that fails to stick can never put the
+   * device into a rebuild-on-every-restart loop.
    */
   async ensureCapabilities() {
-    const manifestCaps = (this.driver.manifest && this.driver.manifest.capabilities) || [];
-    for (const cap of manifestCaps) {
-      if (!this.hasCapability(cap)) {
-        await this.addCapability(cap).catch(this.error);
-        this.log(`Added missing capability: ${cap}`);
+    const wanted = (this.driver.manifest && this.driver.manifest.capabilities) || [];
+    if (!wanted.length) {
+      this.error('Driver manifest lists no capabilities — skipping capability sync');
+      return;
+    }
+
+    const signature = wanted.join('|');
+    const current = this.getCapabilities();
+    if (current.length === wanted.length && current.every((cap, i) => cap === wanted[i])) {
+      await this.setStoreValue('capabilityLayout', signature);
+      return;
+    }
+
+    // 이 매니페스트로 이미 한 번 재구성했는데도 순서가 다르면, 반복 삭제로 인사이트를
+    // 계속 날리지 않도록 누락된 것만 덧붙이는 비파괴 경로로 물러난다.
+    if (await this.getStoreValue('capabilityLayout') === signature) {
+      for (const cap of wanted) {
+        if (!this.hasCapability(cap)) {
+          try {
+            await this.addCapability(cap);
+            this.log(`Added missing capability: ${cap}`);
+          } catch (e) {
+            this.error(`addCapability(${cap}) failed:`, e);
+          }
+        }
+      }
+      return;
+    }
+
+    let from = 0;
+    while (from < current.length && from < wanted.length && current[from] === wanted[from]) {
+      from += 1;
+    }
+
+    this.log(`Capability sync from index ${from}: [${current.slice(from).join(', ')}]`
+      + ` -> [${wanted.slice(from).join(', ')}]`);
+
+    for (const cap of current.slice(from).reverse()) {
+      try {
+        await this.removeCapability(cap);
+      } catch (e) {
+        this.error(`removeCapability(${cap}) failed:`, e);
       }
     }
+    for (const cap of wanted.slice(from)) {
+      try {
+        await this.addCapability(cap);
+      } catch (e) {
+        this.error(`addCapability(${cap}) failed:`, e);
+      }
+    }
+
+    await this.setStoreValue('capabilityLayout', signature);
+    this.log(`Capability sync done: ${this.getCapabilities().join(', ')}`);
   }
 
   initCalculator() {
@@ -73,11 +137,11 @@ class KoreaElecDevice extends Device {
   }
 
   /**
-   * Time-of-use load period for a given local time (시간대 판정).
+   * 시(hour) 기준 부하시간대.
    * 경부하(off) 22-08시(전계절); 여름·봄가을 최대(peak) 15-21시, 그 외 중간(mid);
    * 겨울 최대 09-12·16-19시, 그 외 중간.
    */
-  touPeriod(nowLocal) {
+  touPeriodByHour(nowLocal) {
     const h = nowLocal.getHours();
     const m = nowLocal.getMonth() + 1;
     const winter = [11, 12, 1, 2].includes(m);
@@ -88,6 +152,25 @@ class KoreaElecDevice extends Device {
     }
     if (h >= 15 && h < 21) return 'peak';
     return 'mid';
+  }
+
+  /**
+   * Time-of-use load period for a given local time (시간대 판정).
+   *
+   * 한전 「계절별·시간대별 구분」의 토요일·공휴일 계량 특례를 적용한다
+   * (docs/2026_kr_bills.pdf, 임시공휴일 제외):
+   *  - 공휴일(일요일 포함) : 최대수요전력 및 사용전력량 → 경부하 시간대로 계량
+   *  - 토요일             : 최대부하 시간대의 사용전력량 → 중간부하 시간대로 계량
+   */
+  touPeriod(nowLocal) {
+    const dow = nowLocal.getDay();
+    const holiday = dow === 0
+      || isPublicHoliday(nowLocal.getFullYear(), nowLocal.getMonth() + 1, nowLocal.getDate());
+    if (holiday) return 'off';
+
+    const period = this.touPeriodByHour(nowLocal);
+    if (dow === 6 && period === 'peak') return 'mid';
+    return period;
   }
 
   async initMeterValues() {
@@ -110,6 +193,15 @@ class KoreaElecDevice extends Device {
     this.hourStartMeter = await this.getStoreValue('hourStartMeter') || 0;
     this.dayStartMeter = await this.getStoreValue('dayStartMeter') || 0;
     this.todayStartMeter = await this.getStoreValue('todayStartMeter') || 0;
+
+    // 오늘 쓴 요금: 자정 시점의 이번달 요금을 스냅샷으로 잡고, 실시간 이번달 요금과의
+    // 차이로 계산한다. null이면 아직 스냅샷이 없다는 뜻(최초 설치 직후)이며, 첫 계산에서
+    // 현재 요금으로 채워 설치 당일에 한 달치가 한꺼번에 찍히는 것을 막는다.
+    // todayBillCarry: 검침일이 하루 중간에 지나가 요금이 0으로 리셋될 때, 리셋 전까지
+    // 오늘 쌓인 금액을 이월해 둔다(그날 하루 요금이 끊기지 않도록).
+    const storedTodayStartBill = await this.getStoreValue('todayStartBill');
+    this.todayStartBill = (typeof storedTodayStartBill === 'number') ? storedTodayStartBill : null;
+    this.todayBillCarry = await this.getStoreValue('todayBillCarry') || 0;
 
     // Restore last period values
     this.lastHourUsage = await this.getStoreValue('lastHourUsage') || 0;
@@ -266,6 +358,13 @@ class KoreaElecDevice extends Device {
       await this.setStoreValue('lastReadingDay', this.lastReadingDay);
       await this.setStoreValue('dayStartMeter', this.dayStartMeter);
       await this.setStoreValue('todayStartMeter', this.todayStartMeter);
+
+      // 날짜가 바뀌었으니 오늘 요금 기준점을 지금까지의 이번달 요금으로 다시 잡는다
+      // (todayStartMeter가 lastMeterValue를 쓰는 것과 같은 시점 기준).
+      this.todayStartBill = this.currentMonthBill;
+      this.todayBillCarry = 0;
+      await this.setStoreValue('todayStartBill', this.todayStartBill);
+      await this.setStoreValue('todayBillCarry', 0);
     }
 
     // Check for new year first (before month check)
@@ -307,6 +406,16 @@ class KoreaElecDevice extends Device {
         last_month_usage: Math.round(this.lastMonthUsage * 10) / 10,
         last_month_bill: Math.round(this.lastMonthBill),
       });
+
+      // 검침일이 하루 중간에 지나가면 이번달 요금이 0부터 다시 쌓인다. 리셋 직전까지
+      // 오늘 누적된 금액을 이월해 두고 기준점을 0으로 내려, 그날 '오늘 쓴 요금'이
+      // 음수로 튀거나 끊기지 않게 한다.
+      if (this.todayStartBill != null) {
+        this.todayBillCarry += Math.max(0, this.currentMonthBill - this.todayStartBill);
+      }
+      this.todayStartBill = 0;
+      await this.setStoreValue('todayBillCarry', this.todayBillCarry);
+      await this.setStoreValue('todayStartBill', 0);
 
       this.monthStartMeter = this.lastMeterValue;
       this.lastBillingPeriod = currentBillingPeriod;
@@ -399,6 +508,15 @@ class KoreaElecDevice extends Device {
       await this.setCapabilityValue('meter_kwh_last_month', Math.round(this.lastMonthUsage * 100) / 100).catch(this.error);
       await this.setCapabilityValue('meter_money_last_month', Math.round(this.lastMonthBill)).catch(this.error);
       await this.setCapabilityValue('meter_money_this_month', Math.round(billResult.total)).catch(this.error);
+
+      // 오늘 쓴 요금 = 자정 스냅샷 이후 오른 이번달 요금 + 검침일 리셋 이월분.
+      // 최초 설치 시에는 지금 값을 기준점으로 잡아 설치 당일에 한 달치가 찍히지 않게 한다.
+      if (this.todayStartBill == null) {
+        this.todayStartBill = billResult.total;
+        await this.setStoreValue('todayStartBill', this.todayStartBill);
+      }
+      const todayCost = this.todayBillCarry + billResult.total - this.todayStartBill;
+      await this.setCapabilityValue('meter_money_today', Math.max(0, Math.round(todayCost))).catch(this.error);
 
       // Check for step change and trigger flow
       const newStep = billResult.kwhStep || 1;

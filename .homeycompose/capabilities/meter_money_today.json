@@ -1,0 +1,17 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Today's Cost",
+    "ko": "오늘 쓴 요금"
+  },
+  "units": {
+    "en": "₩",
+    "ko": "원"
+  },
+  "decimals": 0,
+  "uiComponent": "sensor",
+  "icon": "/assets/money.svg",
+  "getable": true,
+  "setable": false,
+  "insights": true
+}
