@@ -14,10 +14,14 @@ const Homey = require('homey');
 // their dependencies — ~200 extra modules / ~22 MB RSS. We only need
 // HomeyAPI.createAppAPI(). Fall back to the package root if the internal path
 // ever changes.
+// eslint-disable global-require: 내부 경로가 바뀌었을 때 패키지 루트로 물러나야 해서
+// try/catch 안에서 require 해야 한다 (정적 import로는 대체 불가).
 let HomeyAPI;
 try {
+  // eslint-disable-next-line global-require
   HomeyAPI = require('homey-api/lib/HomeyAPI/HomeyAPI');
 } catch (err) {
+  // eslint-disable-next-line global-require
   ({ HomeyAPI } = require('homey-api'));
 }
 

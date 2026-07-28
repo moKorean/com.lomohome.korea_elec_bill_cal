@@ -103,7 +103,7 @@ class KoreaElecDriver extends Driver {
     const devices = [];
 
     try {
-      const api = this.homey.app.api;
+      const { api } = this.homey.app;
       if (!api) {
         this.error('Homey API not ready');
         return devices;

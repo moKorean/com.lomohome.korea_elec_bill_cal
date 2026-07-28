@@ -237,7 +237,7 @@ class KoreaElecDevice extends Device {
     }
 
     try {
-      const api = this.homey.app.api;
+      const { api } = this.homey.app;
       if (!api) {
         this.error('Homey API not ready');
         return;
@@ -604,8 +604,8 @@ class KoreaElecDevice extends Device {
 
     // Validate meter start values: current >= month >= year
     const currentMeter = this.lastMeterValue || 0;
-    let yearStart = newSettings.meter_year_start;
-    let monthStart = newSettings.meter_month_start;
+    const yearStart = newSettings.meter_year_start;
+    const monthStart = newSettings.meter_month_start;
 
     // Validation: year_start should be <= month_start <= current meter
     if (changedKeys.includes('meter_year_start') || changedKeys.includes('meter_month_start')) {
@@ -754,17 +754,14 @@ class KoreaElecDevice extends Device {
       // Last day of month: period is 1st to last day
       periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), 1);
       periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth() + 1, 0);
+    } else if (nowLocal.getDate() >= checkDay) {
+      // Period starts on check_day: current month's check_day to next month's check_day - 1
+      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay);
+      periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth() + 1, checkDay - 1);
     } else {
-      // Period starts on check_day
-      if (nowLocal.getDate() >= checkDay) {
-        // Current month's check_day to next month's check_day - 1
-        periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay);
-        periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth() + 1, checkDay - 1);
-      } else {
-        // Previous month's check_day to current month's check_day - 1
-        periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth() - 1, checkDay);
-        periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay - 1);
-      }
+      // Previous month's check_day to current month's check_day - 1
+      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth() - 1, checkDay);
+      periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay - 1);
     }
 
     // Calculate days in period and days elapsed
