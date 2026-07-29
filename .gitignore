@@ -13,6 +13,9 @@ node_modules/
 # Homey build artifacts
 .homeybuild/
 
+# Golden test failure dumps (written only when the bill regression test fails)
+test/.golden-actual/
+
 # OS generated files
 .DS_Store
 Thumbs.db
