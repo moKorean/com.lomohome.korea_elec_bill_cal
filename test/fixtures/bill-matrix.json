@@ -2,7 +2,7 @@
   "_comment": "요금 계산 회귀 기준값. 요율표(lib/rates_korea.json)나 계산 로직을 의도적으로 바꿨을 때만 `npm run test:golden:update`로 갱신하고, 변경 내역을 커밋 메시지에 남긴다.",
   "residential": {
     "cases": 21120,
-    "sha256": "7b9ba8ff7faba82c6bb5516aadfda95734413138a16d78e694d61a220406711b"
+    "sha256": "188e6b5673424c72fd1e4a6a4a1d3a01ba992008b0651301f1a5b311de4a413b"
   },
   "flat": {
     "cases": 30096,

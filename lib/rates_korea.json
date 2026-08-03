@@ -1,4 +1,5 @@
 {
+    "_COMMENT": "한전 요금표 기준 요율. 2026-08 시점에 유효한 항목만 유지한다(과거 이력 제거). 출처: docs/2026_kr_bills.pdf (2026-06-01 시행). PRICE_DC의 하계는 복지할인 한도 증액 기간 6/1~8/31 기준이며, 주택용 누진 요율의 하계(7/1~8/31)와 기간이 다르다.",
     "PRICE_BASE": {
         "low": {
             "basicPrice": [910, 1600, 7300, 7300],
@@ -47,127 +48,354 @@
         }
     },
     "PRICE_KWH": {
-        "2101": {
-            "low": { "kwhPrice": [88.3, 182.9, 275.6, 704.5] },
-            "high": { "kwhPrice": [73.3, 142.3, 210.6, 569.6] }
-        },
-        "2204": {
-            "low": { "kwhPrice": [93.2, 187.8, 280.5, 709.4] },
-            "high": { "kwhPrice": [78.2, 147.2, 215.5, 574.5] }
-        },
-        "2210": {
-            "low": { "kwhPrice": [100.6, 195.2, 287.9, 716.8] },
-            "high": { "kwhPrice": [85.6, 154.6, 222.9, 581.9] }
-        },
-        "2301": {
-            "low": { "kwhPrice": [112.0, 206.6, 299.3, 728.2] },
-            "high": { "kwhPrice": [97.0, 166.0, 234.3, 593.3] }
-        },
         "2305": {
-            "low": { "kwhPrice": [120.0, 214.6, 307.3, 736.2] },
-            "high": { "kwhPrice": [105.0, 174.0, 242.3, 601.3] }
+            "low": {
+                "kwhPrice": [120.0, 214.6, 307.3, 736.2]
+            },
+            "high": {
+                "kwhPrice": [105.0, 174.0, 242.3, 601.3]
+            }
         }
     },
     "PRICE_ADJUSTMENT": {
-        "2101": { "adjustment": [5, 5.3, -3] },
-        "2109": { "adjustment": [5, 5.3, 0] },
-        "2204": { "adjustment": [6.7, 7.3, 0] },
-        "2207": { "adjustment": [6.7, 7.3, 5] },
-        "2301": { "adjustment": [8.8, 9, 5] }
+        "2301": {
+            "adjustment": [8.8, 9, 5]
+        }
     },
     "BASE_FUND": {
-        "2101": { "baseFundp": 0.037 },
-        "2407": { "baseFundp": 0.032 },
-        "2507": { "baseFundp": 0.027 }
+        "2507": {
+            "baseFundp": 0.027
+        }
     },
     "PRICE_ELECBASIC": {
-        "2101": {
-            "low": { "elecBasicLimit": [4000, 200] },
-            "high": { "elecBasicLimit": [2500, 200] }
-        },
-        "2109": {
-            "low": { "elecBasicLimit": [2000, 200] },
-            "high": { "elecBasicLimit": [1500, 200] }
-        },
         "2207": {
-            "low": { "elecBasicLimit": [0, 200] },
-            "high": { "elecBasicLimit": [0, 200] }
+            "low": {
+                "elecBasicLimit": [0, 200]
+            },
+            "high": {
+                "elecBasicLimit": [0, 200]
+            }
         }
     },
     "PRICE_DC": {
-        "2101": {},
-        "2207": {
-            "dc": {
-                "etc": { "a1": [22000, 0.3], "a2": 0.3, "b1": 23600, "b2": 0.3, "b3": 23900, "b4": 15600, "b5": 12600 },
-                "summer": { "a1": [22000, 0.3], "a2": 0.3, "b1": 29600, "b2": 0.3, "b3": 29600, "b4": 18600, "b5": 15600 }
-            }
-        },
-        "2210": {
-            "dc": {
-                "etc": { "a1": [22000, 0.3], "a2": 0.3, "b1": 22000, "b2": 0.3, "b3": 23900, "b4": 14000, "b5": 11000 }
-            }
-        },
-        "2301": {
-            "dc": {
-                "etc": { "a1": [16000, 0.3], "a2": 0.3, "b1": 16000, "b2": 0.3, "b3": 16000, "b4": 10000, "b5": 8000, "weak": [13.1, 313] },
-                "summer": { "a1": [16000, 0.3], "a2": 0.3, "b1": 20000, "b2": 0.3, "b3": 20000, "b4": 12000, "b5": 10000, "weak": [13.1, 313] }
-            }
-        },
-        "2306": {
-            "dc": {
-                "etc": { "a1": [16000, 0.3], "a2": 0.3, "b1": 16000, "b2": 0.3, "b3": 16000, "b4": 10000, "b5": 8000, "weak": [21.1, 313] },
-                "summer": { "a1": [16000, 0.3], "a2": 0.3, "b1": 20000, "b2": 0.3, "b3": 20000, "b4": 12000, "b5": 10000, "weak": [21.1, 313] }
-            }
-        },
-        "2501": {
-            "dc": {
-                "etc": { "a1": [16000, 0.3], "a2": 0.3, "b1": 16000, "b2": 0.3, "b3": 16000, "b4": 10000, "b5": 8000, "weak": [8, 313] },
-                "summer": { "a1": [16000, 0.3], "a2": 0.3, "b1": 20000, "b2": 0.3, "b3": 20000, "b4": 12000, "b5": 10000, "weak": [8, 313] }
-            }
-        },
         "2504": {
             "dc": {
-                "etc": { "a1": [16000, 0.3], "a2": 0.3, "b1": 16000, "b2": 0.3, "b3": 16000, "b4": 10000, "b5": 8000, "weak": [0, 0] },
-                "summer": { "a1": [16000, 0.3], "a2": 0.3, "b1": 20000, "b2": 0.3, "b3": 20000, "b4": 12000, "b5": 10000, "weak": [0, 0] }
+                "etc": {
+                    "a1": [16000, 0.3],
+                    "a2": 0.3,
+                    "b1": 16000,
+                    "b2": 0.3,
+                    "b3": 16000,
+                    "b4": 10000,
+                    "b5": 8000,
+                    "weak": [0, 0]
+                },
+                "summer": {
+                    "a1": [16000, 0.3],
+                    "a2": 0.3,
+                    "b1": 20000,
+                    "b2": 0.3,
+                    "b3": 20000,
+                    "b4": 12000,
+                    "b5": 10000,
+                    "weak": [0, 0]
+                }
             }
         }
     },
     "_TARIFF_FLAT_COMMENT": "비주택용 정액(계절별 단일요율) 종별. KEPCO 2026-06-01 시행. basic=기본요금(원/kW), kwh=계절별 전력량요금(원/kWh, 여름6-8/봄가을3-5,9-10/겨울11-2), kwhFlat=계절무관 단일요율. 기후환경요금·연료비조정은 PRICE_ADJUSTMENT를 재사용.",
     "TARIFF_FLAT": {
-        "general_gap1_low":       { "basic": 6160, "kwh": { "summer": 132.4, "spring_fall": 91.9,  "winter": 119.0 } },
-        "general_gap1_highA_s1":  { "basic": 7170, "kwh": { "summer": 142.6, "spring_fall": 98.6,  "winter": 130.3 } },
-        "general_gap1_highA_s2":  { "basic": 8230, "kwh": { "summer": 138.6, "spring_fall": 94.3,  "winter": 125.0 } },
-        "general_gap1_highB_s1":  { "basic": 7170, "kwh": { "summer": 140.5, "spring_fall": 97.5,  "winter": 127.3 } },
-        "general_gap1_highB_s2":  { "basic": 8230, "kwh": { "summer": 135.2, "spring_fall": 92.2,  "winter": 122.0 } },
-
-        "edu_gap_low":       { "basic": 5230, "kwh": { "summer": 123.6, "spring_fall": 86.4, "winter": 110.8 } },
-        "edu_gap_highA_s1":  { "basic": 5550, "kwh": { "summer": 123.3, "spring_fall": 86.5, "winter": 109.3 } },
-        "edu_gap_highA_s2":  { "basic": 6370, "kwh": { "summer": 118.8, "spring_fall": 82.1, "winter": 104.8 } },
-        "edu_gap_highB_s1":  { "basic": 5550, "kwh": { "summer": 122.6, "spring_fall": 86.1, "winter": 108.5 } },
-        "edu_gap_highB_s2":  { "basic": 6370, "kwh": { "summer": 118.1, "spring_fall": 81.6, "winter": 104.0 } },
-
-        "ind_gap1_low":       { "basic": 5550, "kwh": { "summer": 116.2, "spring_fall": 94.4,  "winter": 114.5 } },
-        "ind_gap1_highA_s1":  { "basic": 6490, "kwh": { "summer": 124.8, "spring_fall": 101.1, "winter": 124.7 } },
-        "ind_gap1_highA_s2":  { "basic": 7470, "kwh": { "summer": 120.0, "spring_fall": 96.5,  "winter": 118.2 } },
-        "ind_gap1_highB_s1":  { "basic": 6000, "kwh": { "summer": 123.6, "spring_fall": 100.0, "winter": 123.2 } },
-        "ind_gap1_highB_s2":  { "basic": 6900, "kwh": { "summer": 118.9, "spring_fall": 95.4,  "winter": 117.1 } },
-
-        "farm_gap":      { "basic": 360,  "kwhFlat": 48.3 },
-        "farm_eul_low":  { "basic": 1150, "kwhFlat": 65.9 },
-        "farm_eul_high": { "basic": 1210, "kwh": { "summer": 68.6, "spring_fall": 66.6, "winter": 68.6 } },
-
-        "night_gap":     { "basic": 0, "kwh": { "summer": 82.1, "spring_fall": 82.1, "winter": 103.5 }, "minKwh": 20 }
+        "general_gap1_low": {
+            "basic": 6160,
+            "kwh": {
+                "summer": 132.4,
+                "spring_fall": 91.9,
+                "winter": 119.0
+            }
+        },
+        "general_gap1_highA_s1": {
+            "basic": 7170,
+            "kwh": {
+                "summer": 142.6,
+                "spring_fall": 98.6,
+                "winter": 130.3
+            }
+        },
+        "general_gap1_highA_s2": {
+            "basic": 8230,
+            "kwh": {
+                "summer": 138.6,
+                "spring_fall": 94.3,
+                "winter": 125.0
+            }
+        },
+        "general_gap1_highB_s1": {
+            "basic": 7170,
+            "kwh": {
+                "summer": 140.5,
+                "spring_fall": 97.5,
+                "winter": 127.3
+            }
+        },
+        "general_gap1_highB_s2": {
+            "basic": 8230,
+            "kwh": {
+                "summer": 135.2,
+                "spring_fall": 92.2,
+                "winter": 122.0
+            }
+        },
+        "edu_gap_low": {
+            "basic": 5230,
+            "kwh": {
+                "summer": 123.6,
+                "spring_fall": 86.4,
+                "winter": 110.8
+            }
+        },
+        "edu_gap_highA_s1": {
+            "basic": 5550,
+            "kwh": {
+                "summer": 123.3,
+                "spring_fall": 86.5,
+                "winter": 109.3
+            }
+        },
+        "edu_gap_highA_s2": {
+            "basic": 6370,
+            "kwh": {
+                "summer": 118.8,
+                "spring_fall": 82.1,
+                "winter": 104.8
+            }
+        },
+        "edu_gap_highB_s1": {
+            "basic": 5550,
+            "kwh": {
+                "summer": 122.6,
+                "spring_fall": 86.1,
+                "winter": 108.5
+            }
+        },
+        "edu_gap_highB_s2": {
+            "basic": 6370,
+            "kwh": {
+                "summer": 118.1,
+                "spring_fall": 81.6,
+                "winter": 104.0
+            }
+        },
+        "ind_gap1_low": {
+            "basic": 5550,
+            "kwh": {
+                "summer": 116.2,
+                "spring_fall": 94.4,
+                "winter": 114.5
+            }
+        },
+        "ind_gap1_highA_s1": {
+            "basic": 6490,
+            "kwh": {
+                "summer": 124.8,
+                "spring_fall": 101.1,
+                "winter": 124.7
+            }
+        },
+        "ind_gap1_highA_s2": {
+            "basic": 7470,
+            "kwh": {
+                "summer": 120.0,
+                "spring_fall": 96.5,
+                "winter": 118.2
+            }
+        },
+        "ind_gap1_highB_s1": {
+            "basic": 6000,
+            "kwh": {
+                "summer": 123.6,
+                "spring_fall": 100.0,
+                "winter": 123.2
+            }
+        },
+        "ind_gap1_highB_s2": {
+            "basic": 6900,
+            "kwh": {
+                "summer": 118.9,
+                "spring_fall": 95.4,
+                "winter": 117.1
+            }
+        },
+        "farm_gap": {
+            "basic": 360,
+            "kwhFlat": 48.3
+        },
+        "farm_eul_low": {
+            "basic": 1150,
+            "kwhFlat": 65.9
+        },
+        "farm_eul_high": {
+            "basic": 1210,
+            "kwh": {
+                "summer": 68.6,
+                "spring_fall": 66.6,
+                "winter": 68.6
+            }
+        },
+        "night_gap": {
+            "basic": 0,
+            "kwh": {
+                "summer": 82.1,
+                "spring_fall": 82.1,
+                "winter": 103.5
+            },
+            "minKwh": 20
+        }
     },
     "_TARIFF_TOU_COMMENT": "시간대별(경부하/중간부하/최대부하) 요금 종별. KEPCO 2026-06-01 시행. basic=기본요금(원/kW). off/mid/peak=계절별 시간대 전력량요금(원/kWh). 시간대 구분: 경부하 22-08시(전계절); 여름·봄가을 중간 08-15·21-22시/최대 15-21시; 겨울 중간 08-09·12-16·19-22시/최대 09-12·16-19시. 토요일·공휴일 계량 특례(임시공휴일 제외): 토요일은 최대부하→중간부하, 공휴일(일요일 포함)은 전 시간대→경부하로 계량 — lib/kr_holidays.js + device.js touPeriod()에서 적용. 기후환경·연료비는 PRICE_ADJUSTMENT 재사용.",
     "TARIFF_TOU": {
-        "general_gap2_highA_s1": { "basic": 7170, "off": { "summer": 89.4, "spring_fall": 89.4, "winter": 98.1 }, "mid": { "summer": 140.6, "spring_fall": 96.8,  "winter": 128.5 }, "peak": { "summer": 163.1, "spring_fall": 108.1, "winter": 143.3 } },
-        "general_gap2_highA_s2": { "basic": 8230, "off": { "summer": 84.1, "spring_fall": 84.1, "winter": 92.8 }, "mid": { "summer": 135.3, "spring_fall": 91.5,  "winter": 123.2 }, "peak": { "summer": 157.8, "spring_fall": 102.8, "winter": 138.0 } },
-        "general_gap2_highB_s1": { "basic": 7170, "off": { "summer": 88.8, "spring_fall": 88.8, "winter": 97.8 }, "mid": { "summer": 137.4, "spring_fall": 94.7,  "winter": 125.1 }, "peak": { "summer": 153.8, "spring_fall": 100.1, "winter": 139.3 } },
-        "general_gap2_highB_s2": { "basic": 8230, "off": { "summer": 83.5, "spring_fall": 83.5, "winter": 92.5 }, "mid": { "summer": 132.1, "spring_fall": 89.4,  "winter": 119.8 }, "peak": { "summer": 148.5, "spring_fall": 94.8,  "winter": 134.0 } },
-
-        "ind_gap2_highA_s1": { "basic": 6490, "off": { "summer": 95.7, "spring_fall": 95.7, "winter": 103.1 }, "mid": { "summer": 121.5, "spring_fall": 100.5, "winter": 120.0 }, "peak": { "summer": 155.0, "spring_fall": 119.7, "winter": 149.4 } },
-        "ind_gap2_highA_s2": { "basic": 7470, "off": { "summer": 90.8, "spring_fall": 90.8, "winter": 98.2 },  "mid": { "summer": 116.6, "spring_fall": 95.6,  "winter": 115.1 }, "peak": { "summer": 150.1, "spring_fall": 114.8, "winter": 144.5 } },
-        "ind_gap2_highB_s1": { "basic": 6000, "off": { "summer": 92.5, "spring_fall": 92.5, "winter": 99.7 },  "mid": { "summer": 120.1, "spring_fall": 99.1,  "winter": 117.7 }, "peak": { "summer": 153.9, "spring_fall": 117.9, "winter": 146.4 } },
-        "ind_gap2_highB_s2": { "basic": 6900, "off": { "summer": 88.0, "spring_fall": 88.0, "winter": 95.2 },  "mid": { "summer": 115.6, "spring_fall": 94.6,  "winter": 113.2 }, "peak": { "summer": 149.4, "spring_fall": 113.4, "winter": 141.9 } }
+        "general_gap2_highA_s1": {
+            "basic": 7170,
+            "off": {
+                "summer": 89.4,
+                "spring_fall": 89.4,
+                "winter": 98.1
+            },
+            "mid": {
+                "summer": 140.6,
+                "spring_fall": 96.8,
+                "winter": 128.5
+            },
+            "peak": {
+                "summer": 163.1,
+                "spring_fall": 108.1,
+                "winter": 143.3
+            }
+        },
+        "general_gap2_highA_s2": {
+            "basic": 8230,
+            "off": {
+                "summer": 84.1,
+                "spring_fall": 84.1,
+                "winter": 92.8
+            },
+            "mid": {
+                "summer": 135.3,
+                "spring_fall": 91.5,
+                "winter": 123.2
+            },
+            "peak": {
+                "summer": 157.8,
+                "spring_fall": 102.8,
+                "winter": 138.0
+            }
+        },
+        "general_gap2_highB_s1": {
+            "basic": 7170,
+            "off": {
+                "summer": 88.8,
+                "spring_fall": 88.8,
+                "winter": 97.8
+            },
+            "mid": {
+                "summer": 137.4,
+                "spring_fall": 94.7,
+                "winter": 125.1
+            },
+            "peak": {
+                "summer": 153.8,
+                "spring_fall": 100.1,
+                "winter": 139.3
+            }
+        },
+        "general_gap2_highB_s2": {
+            "basic": 8230,
+            "off": {
+                "summer": 83.5,
+                "spring_fall": 83.5,
+                "winter": 92.5
+            },
+            "mid": {
+                "summer": 132.1,
+                "spring_fall": 89.4,
+                "winter": 119.8
+            },
+            "peak": {
+                "summer": 148.5,
+                "spring_fall": 94.8,
+                "winter": 134.0
+            }
+        },
+        "ind_gap2_highA_s1": {
+            "basic": 6490,
+            "off": {
+                "summer": 95.7,
+                "spring_fall": 95.7,
+                "winter": 103.1
+            },
+            "mid": {
+                "summer": 121.5,
+                "spring_fall": 100.5,
+                "winter": 120.0
+            },
+            "peak": {
+                "summer": 155.0,
+                "spring_fall": 119.7,
+                "winter": 149.4
+            }
+        },
+        "ind_gap2_highA_s2": {
+            "basic": 7470,
+            "off": {
+                "summer": 90.8,
+                "spring_fall": 90.8,
+                "winter": 98.2
+            },
+            "mid": {
+                "summer": 116.6,
+                "spring_fall": 95.6,
+                "winter": 115.1
+            },
+            "peak": {
+                "summer": 150.1,
+                "spring_fall": 114.8,
+                "winter": 144.5
+            }
+        },
+        "ind_gap2_highB_s1": {
+            "basic": 6000,
+            "off": {
+                "summer": 92.5,
+                "spring_fall": 92.5,
+                "winter": 99.7
+            },
+            "mid": {
+                "summer": 120.1,
+                "spring_fall": 99.1,
+                "winter": 117.7
+            },
+            "peak": {
+                "summer": 153.9,
+                "spring_fall": 117.9,
+                "winter": 146.4
+            }
+        },
+        "ind_gap2_highB_s2": {
+            "basic": 6900,
+            "off": {
+                "summer": 88.0,
+                "spring_fall": 88.0,
+                "winter": 95.2
+            },
+            "mid": {
+                "summer": 115.6,
+                "spring_fall": 94.6,
+                "winter": 113.2
+            },
+            "peak": {
+                "summer": 149.4,
+                "spring_fall": 113.4,
+                "winter": 141.9
+            }
+        }
     }
 }
