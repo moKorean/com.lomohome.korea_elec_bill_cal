@@ -104,22 +104,23 @@ test('검침일에 요금이 리셋되어도 음수로 튀지 않는다', async 
 
   // 검침일(7/8) 직전까지 사용량을 쌓는다
   for (let d = 10; d <= 30; d += 1) await tick(dev, [2026, 6, d, 23, 50], (d - 9) * 24);
-  for (let d = 1; d <= 7; d += 1) await tick(dev, [2026, 7, d, 23, 50], 504 + d * 24);
+  for (let d = 1; d <= 8; d += 1) await tick(dev, [2026, 7, d, 23, 50], 504 + d * 24);
 
-  const onCheckDay = await tick(dev, [2026, 7, 8, 6, 0], 690);
-  const later = await tick(dev, [2026, 7, 8, 20, 0], 710);
+  const onCheckDay = await tick(dev, [2026, 7, 9, 6, 0], 690);
+  const later = await tick(dev, [2026, 7, 9, 20, 0], 710);
   assert.ok(onCheckDay >= 0, '검침일 음수 아님');
   assert.ok(later >= onCheckDay, '검침일에도 계속 누적');
 
-  const nextDay = await tick(dev, [2026, 7, 9, 0, 10], 711);
+  const nextDay = await tick(dev, [2026, 7, 10, 0, 10], 711);
   assert.ok(nextDay < later, '다음날 다시 리셋');
   assert.strictEqual(dev.store.todayBillCarry, 0, '이월분은 자정에 정리된다');
 });
 
 test('검침일이 하루 중간에 감지되면 리셋 전 누적분을 이월한다', async () => {
-  // 디바이스가 검침일 당일에 재시작되면 날짜 전환과 청구기간 전환이 갈라진다.
-  // (lastReadingDay는 이미 8일인데 lastBillingPeriod는 아직 전월)
-  clock.setKst(2026, 7, 8, 6, 0);
+  // 디바이스가 청구기간 전환일에 재시작되면 날짜 전환과 청구기간 전환이 갈라진다.
+  // 한전 기간은 (검침일, 다음 검침일] 이므로 검침일 8일의 전환은 9일에 일어난다.
+  // (lastReadingDay는 이미 9일인데 lastBillingPeriod는 아직 전월)
+  clock.setKst(2026, 7, 9, 6, 0);
   const dev = makeDevice({ settings: { check_day: 8 } });
   dev.initCalculator();
   await dev.initMeterValues();
@@ -129,7 +130,7 @@ test('검침일이 하루 중간에 감지되면 리셋 전 누적분을 이월�
   dev.yearStartMeter = 0;
   dev.dayStartMeter = 676;
   dev.todayStartMeter = 676;
-  dev.lastReadingDay = { day: 8 };
+  dev.lastReadingDay = { day: 9 };
   dev.lastReadingHour = { hour: 6 };
   dev.lastReadingYear = { year: 2026 };
   dev.lastBillingPeriod = { year: 2026, month: 5 }; // 아직 6월
@@ -140,11 +141,11 @@ test('검침일이 하루 중간에 감지되면 리셋 전 누적분을 이월�
   const expectedCarry = dev.currentMonthBill - snapshot;
   assert.ok(expectedCarry > 0, '이월될 금액이 있는 상황');
 
-  const afterReset = await tick(dev, [2026, 7, 8, 6, 30], 695);
+  const afterReset = await tick(dev, [2026, 7, 9, 6, 30], 695);
   assert.strictEqual(dev.store.todayBillCarry, expectedCarry, '이월 금액이 정확');
   assert.ok(afterReset >= expectedCarry, '오늘 요금에 이월분이 포함된다');
 
-  const later = await tick(dev, [2026, 7, 8, 20, 0], 710);
+  const later = await tick(dev, [2026, 7, 9, 20, 0], 710);
   assert.ok(later > afterReset, '리셋 후에도 계속 증가');
 });
 

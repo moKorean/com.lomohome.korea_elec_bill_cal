@@ -256,8 +256,8 @@
             "ko": "검침일"
           },
           "hint": {
-            "en": "Day of month when meter is read (1-31, 0 for last day)",
-            "ko": "검침일 (1-31, 0은 말일)"
+            "en": "Day of month when KEPCO reads the meter (1-31, or 0 for the last day). The billing period runs from the day after one reading through the next reading day.",
+            "ko": "한전 정기검침일 (1~31, 0은 말일). 산출기간은 검침일 다음날부터 다음 검침일까지입니다. 29~31일은 해당 일수가 없는 달에는 그 달 말일로 처리됩니다."
           },
           "value": 1,
           "min": 0,

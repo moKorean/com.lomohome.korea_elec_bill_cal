@@ -3,6 +3,11 @@
  *
  * 골든 해시는 "변했는지"만 알려주므로, 애초에 값이 맞는지는 이 테스트가 담당한다.
  * 기대값은 모두 요금표에서 유도한 것이고 코드 출력을 베낀 것이 아니다.
+ *
+ * 단일 계절만 검증하는 케이스는 검침일을 **말일(checkDay: 0)** 로 둔다. 한전 산출기간은
+ * (검침일, 다음 검침일] 이므로 말일 검침일 때만 기간이 역월과 정확히 일치하고, 그때 비로소
+ * 요금표 손계산값을 그대로 대조할 수 있다. 검침일 1일은 기간이 2일~다음달 1일이 되어
+ * 계절이 걸친다.
  */
 
 'use strict';
@@ -21,7 +26,7 @@ test('주택용 저압 710kWh 기타계절 — 구성요소까지 요금표와 �
   //   기후환경 710×9 = 6,390 / 연료비조정 710×5 = 3,550
   //   전기요금계 179,423 -> 부가세 17,942, 기반기금 4,840 -> 청구 202,200
   const today = new Date(2026, 5, 30, 12, 0);
-  const r = bill({ pressure: 'low', checkDay: 1 }, 710, today);
+  const r = bill({ pressure: 'low', checkDay: 0 }, 710, today);
 
   assert.strictEqual(r.mm1.season, 'etc');
   assert.strictEqual(r.basicWon, 7300, '기본요금');
@@ -41,7 +46,7 @@ test('주택용 고압 710kWh 기타계절 — 아파트 요율', () => {
   //   전력량 200×105 + 200×174 + 310×242.3 = 21,000 + 34,800 + 75,113 = 130,913
   //   전기요금계 6,060 + 130,913 + 6,390 + 3,550 = 146,913 -> 청구 165,560
   const today = new Date(2026, 5, 30, 12, 0);
-  const r = bill({ pressure: 'high', checkDay: 1 }, 710, today);
+  const r = bill({ pressure: 'high', checkDay: 0 }, 710, today);
 
   assert.strictEqual(r.basicWon, 6060);
   assert.strictEqual(r.kwhWon, 130913);
@@ -55,7 +60,7 @@ test('주택용 저압 710kWh 하계 — 300/450kWh 경계 적용', () => {
   //   전력량 300×120.0 + 150×214.6 + 260×307.3 = 36,000 + 32,190 + 79,898 = 148,088
   //   전기요금계 7,300 + 148,088 + 6,390 + 3,550 = 165,328 -> 청구 186,320
   const today = new Date(2026, 6, 31, 12, 0);
-  const r = bill({ pressure: 'low', checkDay: 1 }, 710, today);
+  const r = bill({ pressure: 'low', checkDay: 0 }, 710, today);
 
   assert.strictEqual(r.mm1.season, 'summer');
   assert.strictEqual(r.kwhWon, 148088);
@@ -67,7 +72,7 @@ test('주택용 저압 200kWh — 1단계만 적용', () => {
   // 기본 910 + 200×120.0 = 24,000 + 기후 1,800 + 연료 1,000 = 27,710
   //   -> 부가세 2,771, 기금 740 -> 청구 31,220
   const today = new Date(2026, 5, 30, 12, 0);
-  const r = bill({ pressure: 'low', checkDay: 1 }, 200, today);
+  const r = bill({ pressure: 'low', checkDay: 0 }, 200, today);
 
   assert.strictEqual(r.basicWon, 910);
   assert.strictEqual(r.kwhWon, 24000);
@@ -80,21 +85,25 @@ test('주택용 저압 200kWh — 1단계만 적용', () => {
 test('슈퍼유저요금 — 1,000kWh 초과 단가', () => {
   // 요금표 주석: 하계 1,000kWh 초과 전력량요금 저압 736.2 / 고압 601.3원/kWh
   const summer = new Date(2026, 6, 31, 12, 0);
-  assert.strictEqual(bill({ pressure: 'low', checkDay: 1 }, 1001, summer).stepRate, 736.2);
-  assert.strictEqual(bill({ pressure: 'high', checkDay: 1 }, 1001, summer).stepRate, 601.3);
+  assert.strictEqual(bill({ pressure: 'low', checkDay: 0 }, 1001, summer).stepRate, 736.2);
+  assert.strictEqual(bill({ pressure: 'high', checkDay: 0 }, 1001, summer).stepRate, 601.3);
 
   // 동계(12~2월)도 1,000kWh 초과 시 슈퍼유저 구간에 진입한다
   const winter = new Date(2026, 11, 25, 12, 0);
-  const w = bill({ pressure: 'low', checkDay: 1 }, 1001, winter);
+  const w = bill({ pressure: 'low', checkDay: 0 }, 1001, winter);
   assert.strictEqual(w.mm1.season, 'winter');
   assert.strictEqual(w.stepRate, 736.2);
 
   // 1,000kWh 이하는 슈퍼유저가 아니다
-  assert.strictEqual(bill({ pressure: 'low', checkDay: 1 }, 1000, summer).stepRate, 307.3);
+  assert.strictEqual(bill({ pressure: 'low', checkDay: 0 }, 1000, summer).stepRate, 307.3);
 });
 
 test('계절이 걸친 산출기간 (검침일 8일, 6/9~7/8) — 일할계산', () => {
-  // 기타계절 + 하계가 섞이므로 두 계절 단독 청구액 사이에 들어와야 한다
+  // 기간 = 기타계절 22일(6/9~6/30) + 하계 8일(7/1~7/8), 총 30일
+  //   저압: (7,300+162,183)×22/30 + (7,300+148,088)×8/30 = 124,287.5 + 41,436.8 = 165,724.3
+  //         + 기후 6,390 + 연료 3,550 = 175,664 -> 부가세 17,566, 기금 4,740 -> 197,970
+  //   고압: (6,060+130,913)×22/30 + (6,060+120,598)×8/30 = 100,446.9 + 33,775.5 = 134,222.3
+  //         + 9,940 = 144,162 -> 부가세 14,416, 기금 3,890 -> 162,460
   const today = new Date(2026, 6, 7, 12, 0);
   const low = bill({ pressure: 'low', checkDay: 8 }, 710, today);
   const high = bill({ pressure: 'high', checkDay: 8 }, 710, today);
@@ -104,8 +113,8 @@ test('계절이 걸친 산출기간 (검침일 8일, 6/9~7/8) — 일할계산',
   assert.strictEqual(low.mm2.season, 'summer');
   assert.strictEqual(low.mm1.useDays + low.mm2.useDays, low.monthDays, '일수 합 = 산출기간 일수');
 
-  assert.strictEqual(low.total, 198600);
-  assert.strictEqual(high.total, 162930);
+  assert.strictEqual(low.total, 197970);
+  assert.strictEqual(high.total, 162460);
   assert.ok(low.total > high.total, '저압이 고압보다 비싸다');
 
   // 하계 단독(186,320) < 걸친 기간 < 기타계절 단독(202,200)
@@ -119,12 +128,13 @@ test('대가족 할인 — 월 16,000원 한도', () => {
 
   assert.strictEqual(dc.bigfamDc, 16000, '30%가 한도를 넘으므로 16,000원으로 제한');
   assert.strictEqual(dc.elecSumWon, base.elecSumWon - 16000);
-  assert.strictEqual(dc.total, 180570);
+  // 175,664 - 16,000 = 159,664 -> 부가세 15,966, 기금 4,310 -> 179,940
+  assert.strictEqual(dc.total, 179940);
 });
 
 test('일반용(갑)Ⅰ 저압 — 계절별 단일요율, 누진 없음', () => {
   // 요금표: 기본 6,160원/kW, 여름철 132.4 / 봄·가을철 91.9 / 겨울철 119.0원/kWh
-  const opts = { tariffType: 'general_gap1_low', contractKw: 10, checkDay: 1 };
+  const opts = { tariffType: 'general_gap1_low', contractKw: 10, checkDay: 0 };
 
   const summer = bill(opts, 1000, new Date(2026, 6, 31, 12, 0));
   assert.strictEqual(summer.basicWon, 61600, '6,160 × 10kW');
@@ -147,7 +157,7 @@ test('시간대별(TOU) 일반용(갑)Ⅱ 고압A 선택Ⅰ — 부하별 단가
   // 요금표 여름철: 경부하 89.4 / 중간부하 140.6 / 최대부하 163.1원/kWh, 기본 7,170원/kW
   const today = new Date(2026, 6, 31, 12, 0);
   const c = new Calc({
-    tariffType: 'general_gap2_highA_s1', contractKw: 100, checkDay: 1, today,
+    tariffType: 'general_gap2_highA_s1', contractKw: 100, checkDay: 0, today,
   });
 
   assert.strictEqual(c.isTouTariff(), true);
@@ -166,10 +176,10 @@ test('시간대별(TOU) 일반용(갑)Ⅱ 고압A 선택Ⅰ — 부하별 단가
 test('심야전력(갑) — 월 최저요금 20kWh 상당', () => {
   // 요금표: 기타계절 82.1원/kWh, 월 최저요금은 20kWh에 해당하는 금액
   const today = new Date(2026, 4, 31, 12, 0);
-  const tiny = bill({ tariffType: 'night_gap', contractKw: 0, checkDay: 1 }, 1, today);
+  const tiny = bill({ tariffType: 'night_gap', contractKw: 0, checkDay: 0 }, 1, today);
   assert.strictEqual(tiny.kwhWon, Math.floor(20 * 82.1), '1kWh만 써도 20kWh 상당 청구');
 
-  const over = bill({ tariffType: 'night_gap', contractKw: 0, checkDay: 1 }, 100, today);
+  const over = bill({ tariffType: 'night_gap', contractKw: 0, checkDay: 0 }, 100, today);
   assert.strictEqual(over.kwhWon, Math.floor(100 * 82.1), '최저요금 초과분은 실사용 기준');
 });
 
@@ -177,7 +187,7 @@ test('사용량 0이어도 기본요금은 부과된다', () => {
   // 기본요금은 사용량과 무관하게 붙는다. 저압 1단계 910원
   //   -> 부가세 91, 기금 20 -> 청구 1,020원
   const today = new Date(2026, 5, 30, 12, 0);
-  const r = bill({ pressure: 'low', checkDay: 1 }, 0, today);
+  const r = bill({ pressure: 'low', checkDay: 0 }, 0, today);
 
   assert.strictEqual(r.basicWon, 910);
   assert.strictEqual(r.kwhWon, 0);
@@ -187,7 +197,7 @@ test('사용량 0이어도 기본요금은 부과된다', () => {
 
 test('전력산업기반기금은 2.7% (2025-07-01 인하 반영)', () => {
   const today = new Date(2026, 5, 30, 12, 0);
-  const r = bill({ pressure: 'low', checkDay: 1 }, 710, today);
+  const r = bill({ pressure: 'low', checkDay: 0 }, 710, today);
   // 기금 = floor(floor(전기요금계 × 0.027) / 10) × 10
   assert.strictEqual(r.baseFund, Math.floor(Math.floor(r.elecSumWon * 0.027) / 10) * 10);
   assert.strictEqual(r.vat, Math.round(r.elecSumWon * 0.1), '부가세 10%');

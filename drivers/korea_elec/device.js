@@ -11,6 +11,7 @@
 const { Device } = require('homey');
 const KoreaElecBillCalculator = require('../../lib/KoreaElecBillCalculator');
 const { isPublicHoliday, lunarSupported } = require('../../lib/kr_holidays');
+const { resolveBillingPeriod, resolvePreviousBillingPeriod } = require('../../lib/billing_period');
 
 class KoreaElecDevice extends Device {
 
@@ -113,6 +114,11 @@ class KoreaElecDevice extends Device {
     this.log(`Capability sync done: ${this.getCapabilities().join(', ')}`);
   }
 
+  /** 사용자 시간대의 벽시계 시각. Homey 런타임의 new Date()는 UTC라 그대로 쓰면 안 된다. */
+  nowLocal(now = new Date()) {
+    return new Date(now.toLocaleString('en-US', { timeZone: this.timeZone }));
+  }
+
   initCalculator() {
     try {
       const tariffType = this.settings.tariff_type || 'residential';
@@ -126,7 +132,8 @@ class KoreaElecDevice extends Device {
         climatePrice: useAuto ? null : (this.settings.climate_price ?? null),
         fuelPrice: useAuto ? null : (this.settings.fuel_price ?? null),
         checkDay: this.settings.check_day || 1,
-        today: new Date(),
+        // 계산기는 산출기간 경계를 날짜로 판정하므로 반드시 사용자 시간대의 벽시계를 받아야 한다.
+        today: this.nowLocal(),
         bigfamDcCfg: parseInt(this.settings.bigfam_dc, 10) || 0,
         welfareDcCfg: parseInt(this.settings.welfare_dc, 10) || 0,
       });
@@ -134,6 +141,32 @@ class KoreaElecDevice extends Device {
     } catch (error) {
       this.error('Failed to initialize calculator:', error);
     }
+  }
+
+  /**
+   * 직전(끝난) 청구기간 기준으로 구성한 계산기.
+   * 검침일 롤오버 시 지난 기간 요금을 확정할 때 쓴다 — 그 기간의 계절·요율로 계산해야 한다.
+   */
+  calculatorForEndedPeriod(nowLocal) {
+    const checkDay = this.settings.check_day || 1;
+    const ended = resolvePreviousBillingPeriod(checkDay, nowLocal);
+    // 끝난 기간의 마지막 날(= 그 기간의 검침일)을 기준일로 준다.
+    const asOf = new Date(ended.checkYear, ended.checkMonth - 1, ended.startDay, 12, 0, 0);
+    asOf.setDate(asOf.getDate() + ended.monthDays - 1);
+
+    const tariffType = this.settings.tariff_type || 'residential';
+    const useAuto = this.settings.use_auto_adjustment !== false;
+    return new KoreaElecBillCalculator({
+      pressure: this.settings.pressure || 'low',
+      tariffType: tariffType === 'residential' ? 'residential' : tariffType,
+      contractKw: this.settings.contract_kw || 0,
+      climatePrice: useAuto ? null : (this.settings.climate_price ?? null),
+      fuelPrice: useAuto ? null : (this.settings.fuel_price ?? null),
+      checkDay,
+      today: asOf,
+      bigfamDcCfg: parseInt(this.settings.bigfam_dc, 10) || 0,
+      welfareDcCfg: parseInt(this.settings.welfare_dc, 10) || 0,
+    });
   }
 
   /**
@@ -327,7 +360,7 @@ class KoreaElecDevice extends Device {
     const meterValue = sourceMeterValue + this.meterTotalStart;
 
     const now = new Date();
-    const nowLocal = new Date(now.toLocaleString('en-US', { timeZone: this.timeZone }));
+    const nowLocal = this.nowLocal(now);
 
     // Check for new hour
     if (nowLocal.getHours() !== this.lastReadingHour.hour) {
@@ -388,10 +421,14 @@ class KoreaElecDevice extends Device {
       this.lastMonthUsage = Math.max(0, this.lastMeterValue - this.monthStartMeter);
       await this.setStoreValue('lastMonthUsage', this.lastMonthUsage);
 
-      // Calculate and save last month's bill before resetting (TOU buckets still
-      // hold the just-completed period at this point).
+      // 끝난 기간의 요금을 확정한다. this.calculator는 호출 시점에 따라 새 기간으로
+      // 초기화돼 있을 수 있으므로(앱 재시작·설정 변경 직후 경로), 여기서는 '직전 기간'을
+      // 명시적으로 지정한 계산기를 따로 만들어 쓴다. 그러지 않으면 지난 달 요금이
+      // 새 기간의 계절·요율로 계산돼 계절 경계마다 어긋난다.
+      // (TOU 버킷은 이 시점까지 끝난 기간의 값을 그대로 들고 있다.)
       if (this.lastMonthUsage > 0) {
-        const lastMonthBillResult = this.calculator.getSimpleBill(this.lastMonthUsage, {
+        const endedPeriodCalc = this.calculatorForEndedPeriod(nowLocal);
+        const lastMonthBillResult = endedPeriodCalc.getSimpleBill(this.lastMonthUsage, {
           off: this.touOffKwh, mid: this.touMidKwh, peak: this.touPeakKwh,
         });
         this.lastMonthBill = lastMonthBillResult.total;
@@ -703,20 +740,8 @@ class KoreaElecDevice extends Device {
    * Calculate daily average usage for this billing period
    */
   calculateDailyAverage(currentMonthUsage, nowLocal) {
-    const checkDay = this.settings.check_day || 1;
-
-    // Calculate billing period start
-    let periodStart;
-    if (checkDay === 0) {
-      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), 1);
-    } else if (nowLocal.getDate() >= checkDay) {
-      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay);
-    } else {
-      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth() - 1, checkDay);
-    }
-
-    const elapsedDays = Math.max(1, Math.ceil((nowLocal - periodStart) / (1000 * 60 * 60 * 24)));
-    return currentMonthUsage / elapsedDays;
+    const { useDays } = resolveBillingPeriod(this.settings.check_day || 1, nowLocal);
+    return currentMonthUsage / Math.max(1, useDays);
   }
 
   /**
@@ -732,7 +757,7 @@ class KoreaElecDevice extends Device {
 
     // Get current forecast and compare with last month actual
     const now = new Date();
-    const nowLocal = new Date(now.toLocaleString('en-US', { timeZone: this.timeZone }));
+    const nowLocal = this.nowLocal(now);
     const forecast = this.calculateForecast(currentMonthUsage, nowLocal);
 
     const percentChange = ((forecast.kwhForecast - this.lastMonthUsage) / this.lastMonthUsage) * 100;
@@ -744,29 +769,9 @@ class KoreaElecDevice extends Device {
    * Based on current usage rate, extrapolate to end of billing period
    */
   calculateForecast(currentMonthUsage, nowLocal) {
-    const checkDay = this.settings.check_day || 1;
-
-    // Calculate billing period start and end dates
-    let periodStart;
-    let periodEnd;
-
-    if (checkDay === 0) {
-      // Last day of month: period is 1st to last day
-      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), 1);
-      periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth() + 1, 0);
-    } else if (nowLocal.getDate() >= checkDay) {
-      // Period starts on check_day: current month's check_day to next month's check_day - 1
-      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay);
-      periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth() + 1, checkDay - 1);
-    } else {
-      // Previous month's check_day to current month's check_day - 1
-      periodStart = new Date(nowLocal.getFullYear(), nowLocal.getMonth() - 1, checkDay);
-      periodEnd = new Date(nowLocal.getFullYear(), nowLocal.getMonth(), checkDay - 1);
-    }
-
-    // Calculate days in period and days elapsed
-    const totalDays = Math.ceil((periodEnd - periodStart) / (1000 * 60 * 60 * 24)) + 1;
-    const elapsedDays = Math.ceil((nowLocal - periodStart) / (1000 * 60 * 60 * 24));
+    const period = resolveBillingPeriod(this.settings.check_day || 1, nowLocal);
+    const totalDays = period.monthDays;
+    const elapsedDays = period.useDays;
 
     // Avoid division by zero
     if (elapsedDays <= 0) {
@@ -802,42 +807,15 @@ class KoreaElecDevice extends Device {
   }
 
   /**
-   * Get current billing period based on check_day (meter reading day)
-   * Returns { year, month } where month changes on check_day
-   * Example: check_day=15, today=July 10 -> billing period is June
-   *          check_day=15, today=July 20 -> billing period is July
+   * 현재 청구기간. 경계 정의는 lib/billing_period.js가 유일한 출처이며 계산기와 공유한다.
+   * 한전 기간은 (검침일, 다음 검침일] 이므로 전환은 검침일 '다음날'에 일어난다.
+   * 예: 검침일 15일 -> 7/15는 아직 6월 기간, 7/16부터 7월 기간.
+   * @returns {{year: number, month: number}} month는 0-based
    */
   getCurrentBillingPeriod(date = new Date()) {
-    const checkDay = this.settings.check_day || 1;
-    const localDate = new Date(date.toLocaleString('en-US', { timeZone: this.timeZone }));
-
-    let year = localDate.getFullYear();
-    let month = localDate.getMonth();
-    const day = localDate.getDate();
-
-    // If check_day is 0, it means last day of month: billing period is always
-    // the current calendar month (transition on the 1st).
-    if (checkDay === 0) {
-      return { year, month };
-    }
-
-    // Clamp the meter reading day to the last day of the current month so that
-    // check_day 29~31 still transitions on the last day of shorter months
-    // (e.g. check_day=31 in February transitions on the 28th/29th, not the 1st
-    //  of March). For check_day 1~28 this is a no-op.
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const effectiveCheckDay = Math.min(checkDay, daysInMonth);
-
-    // Before the (effective) check day: still in previous month's billing period
-    if (day < effectiveCheckDay) {
-      month -= 1;
-      if (month < 0) {
-        month = 11;
-        year -= 1;
-      }
-    }
-
-    return { year, month };
+    const period = resolveBillingPeriod(this.settings.check_day || 1, this.nowLocal(date));
+    // month는 0-based로 유지한다 (기존 저장값 호환).
+    return { year: period.checkYear, month: period.checkMonth - 1 };
   }
 
 }
