@@ -1,26 +1,43 @@
 # Gemini Instructions: Homey App Development (SDK v3)
 
-## Environment Context
-- **Node.js Version:** v24.14.0 (Active LTS)
-- **Platform:** Homey Pro (SDK v3)
-- **Primary Tooling:** Homey CLI (`homey` commands available in terminal)
+## Project Context
+- **App:** Korea Electricity Bill Calculator — estimates KEPCO bills from an existing energy meter.
+- **Platform:** Homey Pro (SDK v3). **Node:** `>=22` (see `package.json` engines).
+- **Tooling:** Homey CLI (`homey app build|validate|run`), ESLint (`eslint-config-athom`), Node's built-in test runner.
 
-## Development Principles (Based on homey-app-skill)
-You are an expert Homey App Engineer. When assisting with this project, strictly adhere to these architectural rules:
+## Layout
+| Path | Role |
+|------|------|
+| `app.js` | App entry; connects HomeyAPI |
+| `drivers/korea_elec/device.js` | Meter tracking, billing periods, capability updates, TOU bucketing |
+| `drivers/korea_elec/driver.js` | Pairing, flow card registration |
+| `lib/KoreaElecBillCalculator.js` | Pure bill calculation (no Homey dependency) |
+| `lib/kr_holidays.js` | Korean public holidays for the TOU Saturday/holiday metering rule |
+| `lib/rates_korea.json` | All KEPCO rates |
+| `.homeycompose/` | Source of truth for the manifest |
+| `test/` | Tests (excluded from the app bundle via `.homeyignore`) |
+| `docs/2026_kr_bills.pdf` | Official KEPCO rate table the data is derived from |
 
-1. **Manifest First:** Always validate changes against `app.json`. Ensure `sdk: 3` is defined.
-2. **Class-Based Architecture:** Use modern ES6+ classes extending `Homey.Device`, `Homey.Driver`, or `Homey.App`.
-3. **Asynchronous Patterns:** Use `async/await` for all Homey API calls. Avoid legacy callbacks.
-4. **Permissions:** Ensure any new capability or web-API usage is mirrored in the `permissions` array of `app.json`.
-5. **On-Device Drivers:** Prioritize local execution. When writing drivers, separate discovery logic from device initialization.
+## Architectural Rules
+1. **Never edit `app.json` directly.** It is generated from `.homeycompose/` + `drivers/*/driver.compose.json`. Edit those, then run `homey app build`. Commit the regenerated `app.json`.
+2. **Rates come from the PDF.** Any change to `lib/rates_korea.json` must be traceable to `docs/2026_kr_bills.pdf` (or a newer official table). State the source and effective date in the commit message.
+3. **Keep the calculator Homey-free.** `lib/KoreaElecBillCalculator.js` must stay runnable in plain Node so it can be tested directly.
+4. **Class-based, async/await.** Extend `Homey.Device` / `Homey.Driver` / `Homey.App`. No legacy callbacks.
+5. **Permissions:** mirror any new web-API usage in the `permissions` array of `.homeycompose/app.json`.
+6. **Capabilities:** add a definition under `.homeycompose/capabilities/` and put the id in the driver's `capabilities` array at the position it should appear. `device.js#ensureCapabilities()` syncs already-paired devices to that order on app update.
+
+## Before Proposing a Change
+```bash
+npm test            # 46 tests, ~1.3s
+npm run lint        # must stay at 0 errors, 0 warnings
+npx homey app validate --level publish
+```
+
+Changing rate data or calculation logic will fail `test/bill-golden.test.js`. That is intended: confirm the diff is what you meant, then run `npm run test:golden:update` and explain the change in the commit message. Never update the golden fixture to silence an unexplained failure.
 
 ## Response Guidelines
-- **Factual & Concise:** Provide code that is syntactically correct for Node 24.
-- **Single-Step Analysis:** Propose one logical change at a time.
-- **Error Handling:** Always include `this.error()` or `this.log()` in `onInit()` and capability listeners.
-- **Library Constraints:** Do not suggest external NPM packages unless they are essential and compatible with Homey's restricted environment.
-
-## Task-Specific Logic
-- **When creating Drivers:** Include `driver.js`, `device.js`, and the relevant fragment for `app.json`.
-- **When debugging:** Ask for `homey app run` output or specific logs from the Homey Developer Portal.
-- **Avoid editing app.json:** app.json is automatically generated from .homeycompose.
+- **Factual & concise.** Propose one logical change at a time.
+- **Error handling:** use `this.error()` / `this.log()` in `onInit()` and capability listeners.
+- **No new dependencies** unless essential and compatible with Homey's restricted runtime. The test suite deliberately uses `node:test` to avoid a framework dependency.
+- **User-facing strings** must be provided in both `en` and `ko`.
+- **When debugging:** ask for `homey app run` output or logs from the Homey Developer Portal.

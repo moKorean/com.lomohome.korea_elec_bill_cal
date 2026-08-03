@@ -365,15 +365,15 @@
         "id": "money_exceeds",
         "title": {
           "en": "This month cost !{{exceeds|doesn't exceed}} amount",
-          "ko": "이번달 예상 요금이 금액을 !{{초과|초과하지 않으면}}"
+          "ko": "이번달 사용량 요금이 금액을 !{{초과|초과하지 않으면}}"
         },
         "titleFormatted": {
           "en": "This month cost !{{exceeds|doesn't exceed}} [[amount]] won",
-          "ko": "이번달 예상 요금이 [[amount]]원을 !{{초과|초과하지 않으면}}"
+          "ko": "이번달 사용량 요금이 [[amount]]원을 !{{초과|초과하지 않으면}}"
         },
         "hint": {
-          "en": "Check if this month's estimated cost exceeds the specified amount",
-          "ko": "이번달 예상 요금이 지정한 금액을 초과하는지 확인합니다"
+          "en": "Check whether the cost accrued so far in this billing period exceeds the specified amount. This is the cost to date, not the end-of-period forecast.",
+          "ko": "이번 청구기간에 지금까지 발생한 요금이 지정한 금액을 초과하는지 확인합니다. 월말 예상 요금이 아니라 현재까지의 요금 기준입니다."
         },
         "args": [
           {
@@ -1374,10 +1374,7 @@
         "da": "KWh i år",
         "nl": "kWh dit jaar",
         "ar": "كيلوواط ساعة هذا العام",
-        "es": "kWh this year",
-        "pl": "kWh this year",
-        "ru": "kWh this year",
-        "ko": "kWh this year"
+        "ko": "올해 사용량"
       },
       "uiComponent": "sensor",
       "icon": "/assets/kwh.svg",
@@ -1544,19 +1541,8 @@
     "meter_tariff": {
       "type": "number",
       "title": {
-        "en": "Active tariff",
-        "de": "Aktiver Tarif",
-        "sv": "Aktiv tariff",
-        "it": "Tariffa attiva",
-        "no": "Aktiv tariff",
-        "fr": "Tarif actif",
-        "da": "Aktuel afgift",
-        "nl": "Actief tarief",
-        "es": "Tarifa activa",
-        "pl": "Aktywna taryfa",
-        "ru": "Активный тариф",
-        "ko": "활성 요금제",
-        "ar": "التعريفة النشطة"
+        "en": "Current Rate",
+        "ko": "현재 단가"
       },
       "uiComponent": "sensor",
       "icon": "/assets/gauge.svg",
@@ -1564,9 +1550,10 @@
       "setable": false,
       "insights": true,
       "units": {
-        "en": "¤"
+        "en": "₩/kWh",
+        "ko": "원/kWh"
       },
-      "decimals": 4
+      "decimals": 1
     }
   }
 }

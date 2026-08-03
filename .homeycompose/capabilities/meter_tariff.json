@@ -1,19 +1,8 @@
 {
   "type": "number",
   "title": {
-    "en": "Active tariff",
-    "de": "Aktiver Tarif",
-    "sv": "Aktiv tariff",
-    "it": "Tariffa attiva",
-    "no": "Aktiv tariff",
-    "fr": "Tarif actif",
-    "da": "Aktuel afgift",
-    "nl": "Actief tarief",
-    "es": "Tarifa activa",
-    "pl": "Aktywna taryfa",
-    "ru": "Активный тариф",
-    "ko": "활성 요금제",
-    "ar": "التعريفة النشطة"
+    "en": "Current Rate",
+    "ko": "현재 단가"
   },
   "uiComponent": "sensor",
   "icon": "/assets/gauge.svg",
@@ -21,7 +10,8 @@
   "setable": false,
   "insights": true,
   "units": {
-    "en": "¤"
+    "en": "₩/kWh",
+    "ko": "원/kWh"
   },
-  "decimals": 4
+  "decimals": 1
 }
