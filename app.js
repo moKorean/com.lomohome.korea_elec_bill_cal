@@ -52,7 +52,10 @@ class KoreaElecBillApp extends Homey.App {
           this.homey.setTimeout(() => reject(new Error('HomeyAPI.createAppAPI timeout')), 10000);
         }),
       ]);
-      this.log('HomeyAPI connected');
+      // 재연결하면 api 객체가 새로 만들어지고, 기존 capability instance는 죽은 객체에
+      // 묶여 조용히 이벤트를 못 받는다. 디바이스가 이 값이 바뀐 것을 보고 재구독한다.
+      this.apiGeneration = (this.apiGeneration || 0) + 1;
+      this.log(`HomeyAPI connected (generation ${this.apiGeneration})`);
     } catch (err) {
       this.error('HomeyAPI init failed, retrying in 1 min:', err);
       this.apiRetryId = this.homey.setTimeout(() => this.initApi(), 60000);

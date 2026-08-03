@@ -40,6 +40,9 @@ class KoreaElecDevice extends Device {
     // Setup source device listener
     await this.setupSourceDevice();
 
+    // API 재연결 감지 + 데이터 신선도 감시
+    this.startWatchdog();
+
     this.log(`Device ${this.getName()} is ready`);
   }
 
@@ -261,8 +264,37 @@ class KoreaElecDevice extends Device {
     this.lastSourceValue = null;
   }
 
+  /** 소스 기기 구독을 해제한다. 재구독 전에 반드시 불러야 리스너가 누적되지 않는다. */
+  destroySourceListeners() {
+    for (const key of ['capabilityListener', 'exportListener']) {
+      if (this[key]) {
+        try {
+          this[key].destroy();
+        } catch (e) {
+          this.error(`${key}.destroy() failed:`, e);
+        }
+        this[key] = null;
+      }
+    }
+  }
+
+  /** 구독 실패(API·소스 기기 미준비) 시 재시도를 예약한다. 백오프 최대 10분. */
+  scheduleSourceRetry(reason) {
+    if (this.sourceRetryId) this.homey.clearTimeout(this.sourceRetryId);
+    this.sourceRetryDelay = Math.min((this.sourceRetryDelay || 15000) * 2, 600000);
+    this.log(`${reason} — retrying source subscription in ${Math.round(this.sourceRetryDelay / 1000)}s`);
+    this.sourceRetryId = this.homey.setTimeout(() => {
+      this.sourceRetryId = null;
+      this.setupSourceDevice().catch((e) => this.error('Source retry failed:', e));
+    }, this.sourceRetryDelay);
+  }
+
   async setupSourceDevice() {
     const sourceDeviceId = this.settings.homey_device_id;
+
+    // 재구독일 수 있으므로 항상 기존 구독을 먼저 끊는다. 이게 없으면 재시도마다
+    // 리스너가 쌓여 같은 값이 여러 번 들어온다.
+    this.destroySourceListeners();
 
     if (!sourceDeviceId) {
       this.log('No source device configured');
@@ -272,16 +304,22 @@ class KoreaElecDevice extends Device {
     try {
       const { api } = this.homey.app;
       if (!api) {
-        this.error('Homey API not ready');
+        // 앱 시작 시 API가 늦게 붙으면 여기로 들어온다. 예전에는 그대로 반환해서
+        // 센서가 영구히 멈췄다.
+        this.scheduleSourceRetry('Homey API not ready');
         return;
       }
 
       this.sourceDevice = await api.devices.getDevice({ id: sourceDeviceId });
 
       if (!this.sourceDevice) {
-        this.error('Source device not found');
+        this.scheduleSourceRetry('Source device not found');
         return;
       }
+
+      // 이 구독이 어느 API 세대에 묶였는지 기록한다. watchdog이 세대 변화를 보고 재구독한다.
+      this.apiGeneration = this.homey.app.apiGeneration;
+      this.sourceRetryDelay = 0;
 
       // Listen for meter_power changes
       if (this.sourceDevice.capabilities.includes('meter_power')) {
@@ -344,13 +382,98 @@ class KoreaElecDevice extends Device {
       }
     } catch (error) {
       this.error('Failed to setup source device:', error);
+      this.scheduleSourceRetry('Source subscription threw');
     }
   }
 
+  /**
+   * 구독 상태 감시. 두 가지를 본다.
+   *  - HomeyAPI가 재연결되어 api 객체가 바뀌면(app.apiGeneration 증가) 재구독한다.
+   *    기존 capability instance는 죽은 api에 묶여 조용히 이벤트를 못 받는다.
+   *  - 값이 너무 오래 안 들어오면 경고를 띄운다. 요금이 그럴듯한 값에 멈춰 있는 게
+   *    사용자에게는 가장 알아채기 어려운 고장이다.
+   */
+  startWatchdog() {
+    const CHECK_MS = 5 * 60 * 1000;
+    const STALE_MS = 6 * 60 * 60 * 1000;
+    this.stopWatchdog();
+    this.watchdogId = this.homey.setInterval(async () => {
+      try {
+        const appGeneration = this.homey.app.apiGeneration;
+        if (this.settings.homey_device_id && appGeneration !== this.apiGeneration) {
+          this.log(`HomeyAPI generation changed (${this.apiGeneration} -> ${appGeneration}) — resubscribing`);
+          await this.setupSourceDevice();
+          return;
+        }
+
+        if (!this.lastUpdateAt || this.staleWarned) return;
+        const idleMs = Date.now() - this.lastUpdateAt;
+        if (idleMs > STALE_MS) {
+          this.staleWarned = true;
+          const hours = Math.floor(idleMs / 3600000);
+          await this.setWarning(this.homey.__('warning_source_stale') || `No meter update for ${hours}h — the bill shown may be out of date.`).catch(this.error);
+          this.error(`No meter update for ${hours}h`);
+        }
+      } catch (e) {
+        this.error('Watchdog check failed:', e);
+      }
+    }, CHECK_MS);
+  }
+
+  stopWatchdog() {
+    if (this.watchdogId) {
+      this.homey.clearInterval(this.watchdogId);
+      this.watchdogId = null;
+    }
+  }
+
+  /** 앱 종료·디바이스 정지 시 구독과 타이머를 정리한다. */
+  async onUninit() {
+    this.log('Device onUninit');
+    this.stopWatchdog();
+    if (this.sourceRetryId) this.homey.clearTimeout(this.sourceRetryId);
+    this.destroySourceListeners();
+  }
+
+  /**
+   * 미터값 갱신 진입점. 실제 처리는 _applyMeterValue()이고, 여기서는 호출을 직렬화한다.
+   *
+   * updateMeter는 서로 독립적인 4개 경로(meter_power 이벤트, meter_power.exported 이벤트,
+   * 최초 구독, 설정 변경 후 재계산)에서 불리고 내부에 await이 많다. 두 호출이 겹치면
+   * await 경계에서 상태가 섞이는데, monthUsage처럼 매번 다시 계산되는 값은 다음 갱신에서
+   * 저절로 복구되지만 TOU 부하 버킷·yearAccumulatedBill·todayBillCarry는 '누산'이라
+   * 겹친 증분이 영구히 남는다. 특히 시간대별 요금제는 요금 전체가 그 버킷에서 나오므로
+   * 대조해서 바로잡을 방법도 없다. 그래서 순차 실행을 보장한다.
+   */
   async updateMeter(sourceMeterValue) {
-    if (typeof sourceMeterValue !== 'number') {
+    this._meterChain = Promise.resolve(this._meterChain)
+      .then(() => this._applyMeterValue(sourceMeterValue))
+      .catch((err) => this.error('updateMeter failed:', err));
+    return this._meterChain;
+  }
+
+  async _applyMeterValue(sourceMeterValue) {
+    if (typeof sourceMeterValue !== 'number' || !Number.isFinite(sourceMeterValue)) {
       this.log('Invalid meter value:', sourceMeterValue);
       return;
+    }
+
+    // 소스 미터 리셋 감지(기기 교체·펌웨어 초기화). 누적값이 줄면 이후 사용량이 기준점을
+    // 다시 넘어설 때까지 0으로 눌려 있고 기준점은 영영 어긋난다. 총 사용량 오프셋을
+    // 낙폭만큼 올려 meterValue의 연속성을 되살린다(모든 기준점이 그대로 유효해진다).
+    if (this.lastSourceValue != null && sourceMeterValue < this.lastSourceValue - 1) {
+      const drop = this.lastSourceValue - sourceMeterValue;
+      this.meterTotalStart += drop;
+      this.log(`Source meter reset detected (${this.lastSourceValue} -> ${sourceMeterValue});`
+        + ` total offset raised by ${drop.toFixed(2)} kWh to keep usage continuous`);
+      await this.setSettings({ meter_total_start: this.meterTotalStart }).catch(this.error);
+    }
+
+    // 마지막으로 값을 받은 시각 — 신선도 감시(watchdog)가 쓴다.
+    this.lastUpdateAt = Date.now();
+    if (this.staleWarned) {
+      this.staleWarned = false;
+      await this.unsetWarning().catch(this.error);
     }
 
     // Remember the raw source value so the exported-energy listener can recompute
@@ -707,12 +830,7 @@ class KoreaElecDevice extends Device {
       try {
         // If source device changed, reconnect
         if (changedKeys.includes('homey_device_id')) {
-          if (this.capabilityListener) {
-            this.capabilityListener.destroy();
-          }
-          if (this.exportListener) {
-            this.exportListener.destroy();
-          }
+          // setupSourceDevice()가 먼저 기존 구독을 끊는다.
           await this.setupSourceDevice();
         }
 
@@ -728,12 +846,9 @@ class KoreaElecDevice extends Device {
 
   onDeleted() {
     this.log('Device deleted');
-    if (this.capabilityListener) {
-      this.capabilityListener.destroy();
-    }
-    if (this.exportListener) {
-      this.exportListener.destroy();
-    }
+    this.stopWatchdog();
+    if (this.sourceRetryId) this.homey.clearTimeout(this.sourceRetryId);
+    this.destroySourceListeners();
   }
 
   /**

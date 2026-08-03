@@ -1,4 +1,5 @@
 {
+  "warning_source_stale": "No meter update received for a while — the bill shown may be out of date. Check that the source device is still reporting.",
   "error_year_greater_than_month": "Year start cannot be greater than month start",
   "error_month_greater_than_current": "Month start cannot be greater than current meter value",
   "error_year_greater_than_current": "Year start cannot be greater than current meter value"

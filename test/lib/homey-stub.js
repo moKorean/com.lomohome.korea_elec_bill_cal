@@ -95,7 +95,27 @@ function makeDevice(opts = {}) {
       this.capValues = {};
       this.settings = settings;
       this.timeZone = 'Asia/Seoul';
-      this.homey = { clock: { getTimezone: () => 'Asia/Seoul' }, __: (k) => k };
+      this.warnings = [];
+      this.timers = new Map();
+      this.nextTimerId = 1;
+      // 스텁 타이머: 자동으로 발화하지 않고 runTimer()로 테스트가 직접 돌린다.
+      this.homey = {
+        clock: { getTimezone: () => 'Asia/Seoul' },
+        __: (k) => k,
+        app: { api: opts.api === undefined ? {} : opts.api, apiGeneration: opts.apiGeneration || 1 },
+        setTimeout: (fn, ms) => {
+          const id = this.nextTimerId++;
+          this.timers.set(id, { fn, ms, kind: 'timeout' });
+          return id;
+        },
+        clearTimeout: (id) => this.timers.delete(id),
+        setInterval: (fn, ms) => {
+          const id = this.nextTimerId++;
+          this.timers.set(id, { fn, ms, kind: 'interval' });
+          return id;
+        },
+        clearInterval: (id) => this.timers.delete(id),
+      };
       this.logs = [];
       this.driver = {
         manifest: { capabilities: MANIFEST },
@@ -146,6 +166,24 @@ function makeDevice(opts = {}) {
     async setCapabilityValue(c, v) {
       if (!this.caps.includes(c)) throw new Error(`no such capability: ${c}`);
       this.capValues[c] = v;
+    }
+
+    async setWarning(msg) {
+      this.warnings.push(msg);
+    }
+
+    async unsetWarning() {
+      this.warnings.push(null);
+    }
+
+    /** 예약된 타이머를 수동으로 실행한다 (kind로 골라서). */
+    async runTimers(kind) {
+      const entries = [...this.timers.entries()].filter(([, t]) => t.kind === kind);
+      for (const [id, t] of entries) {
+        if (t.kind === 'timeout') this.timers.delete(id);
+        await t.fn();
+      }
+      return entries.length;
     }
 
     async getStoreValue(k) {
