@@ -10,6 +10,7 @@
 
 const { Device } = require('homey');
 const KoreaElecBillCalculator = require('../../lib/KoreaElecBillCalculator');
+const { emptyTouBuckets } = require('../../lib/KoreaElecBillCalculator');
 const { isPublicHoliday, lunarSupported } = require('../../lib/kr_holidays');
 const { resolveBillingPeriod, resolvePreviousBillingPeriod } = require('../../lib/billing_period');
 
@@ -250,9 +251,9 @@ class KoreaElecDevice extends Device {
     this.currentKwhStep = await this.getStoreValue('currentKwhStep') || 1;
 
     // TOU (시간대별) load-period accumulators for this billing period
-    this.touOffKwh = await this.getStoreValue('touOffKwh') || 0;
-    this.touMidKwh = await this.getStoreValue('touMidKwh') || 0;
-    this.touPeakKwh = await this.getStoreValue('touPeakKwh') || 0;
+    // 계절별 x 부하시간대별 누적. 구버전은 계절 구분 없는 3버킷이었고 그 값으로는
+    // 어느 계절 사용량인지 복원할 수 없어 이관하지 않는다(디바이스 재등록 안내).
+    this.touBuckets = await this.getStoreValue('touBuckets') || emptyTouBuckets();
 
     // Day-over-day comparison + budget-exceeded edge state
     this.dayBeforeUsage = await this.getStoreValue('dayBeforeUsage') || 0;
@@ -551,9 +552,7 @@ class KoreaElecDevice extends Device {
       // (TOU 버킷은 이 시점까지 끝난 기간의 값을 그대로 들고 있다.)
       if (this.lastMonthUsage > 0) {
         const endedPeriodCalc = this.calculatorForEndedPeriod(nowLocal);
-        const lastMonthBillResult = endedPeriodCalc.getSimpleBill(this.lastMonthUsage, {
-          off: this.touOffKwh, mid: this.touMidKwh, peak: this.touPeakKwh,
-        });
+        const lastMonthBillResult = endedPeriodCalc.getSimpleBill(this.lastMonthUsage, this.touBuckets);
         this.lastMonthBill = lastMonthBillResult.total;
         await this.setStoreValue('lastMonthBill', this.lastMonthBill);
         this.yearAccumulatedBill += lastMonthBillResult.total;
@@ -583,12 +582,8 @@ class KoreaElecDevice extends Device {
       await this.setSettings({ meter_month_start: this.monthStartMeter }).catch(this.error);
 
       // Reset TOU load-period accumulators at the start of the new billing period
-      this.touOffKwh = 0;
-      this.touMidKwh = 0;
-      this.touPeakKwh = 0;
-      await this.setStoreValue('touOffKwh', 0);
-      await this.setStoreValue('touMidKwh', 0);
-      await this.setStoreValue('touPeakKwh', 0);
+      this.touBuckets = emptyTouBuckets();
+      await this.setStoreValue('touBuckets', this.touBuckets);
 
       // Reset solar export baseline for the new billing period
       this.exportMonthStart = this.exportMeterValue;
@@ -604,13 +599,13 @@ class KoreaElecDevice extends Device {
     if (this.tariffIsTou) {
       const touDelta = meterValue - this.lastMeterValue;
       if (touDelta > 0) {
+        // 부하시간대와 함께 그 시점의 계절도 기록한다. 계절이 걸치는 산출기간에서
+        // 사용량이 잘못된 계절 단가로 계산되던 문제(최대부하는 계절 간 50% 이상 차이)를
+        // 막는다.
         const period = this.touPeriod(nowLocal);
-        if (period === 'peak') this.touPeakKwh += touDelta;
-        else if (period === 'mid') this.touMidKwh += touDelta;
-        else this.touOffKwh += touDelta;
-        await this.setStoreValue('touPeakKwh', this.touPeakKwh);
-        await this.setStoreValue('touMidKwh', this.touMidKwh);
-        await this.setStoreValue('touOffKwh', this.touOffKwh);
+        const season = this.calculator.commercialSeason(nowLocal.getMonth() + 1);
+        this.touBuckets[season][period] += touDelta;
+        await this.setStoreValue('touBuckets', this.touBuckets);
       }
     }
 
@@ -625,9 +620,7 @@ class KoreaElecDevice extends Device {
     // Calculate bill using Korean progressive rate
     try {
       this.initCalculator(); // Re-init with current date
-      const billResult = this.calculator.getSimpleBill(billableUsage, {
-        off: this.touOffKwh, mid: this.touMidKwh, peak: this.touPeakKwh,
-      });
+      const billResult = this.calculator.getSimpleBill(billableUsage, this.touBuckets);
 
       // Update capabilities
       await this.setCapabilityValue('meter_power', meterValue).catch(this.error);
@@ -904,12 +897,13 @@ class KoreaElecDevice extends Device {
     try {
       let touForecast = null;
       if (this.tariffIsTou) {
-        const touTotal = this.touOffKwh + this.touMidKwh + this.touPeakKwh;
+        const touTotal = Object.values(this.touBuckets)
+          .reduce((sum, bySeason) => sum + bySeason.off + bySeason.mid + bySeason.peak, 0);
         const scale = touTotal > 0 ? kwhForecast / touTotal : 0;
         touForecast = {
-          off: this.touOffKwh * scale,
-          mid: this.touMidKwh * scale,
-          peak: this.touPeakKwh * scale,
+          ...Object.fromEntries(Object.entries(this.touBuckets).map(([season, b]) => [season, {
+            off: b.off * scale, mid: b.mid * scale, peak: b.peak * scale,
+          }])),
         };
       }
       const forecastBill = this.calculator.getSimpleBill(kwhForecast, touForecast);

@@ -85,7 +85,8 @@ test('A1: TOU 버킷이 동시 호출에서도 실제 증분과 일치한다', a
 
   await Promise.all([dev.updateMeter(10), dev.updateMeter(20), dev.updateMeter(30)]);
 
-  const bucketSum = dev.touOffKwh + dev.touMidKwh + dev.touPeakKwh;
+  const bucketSum = Object.values(dev.touBuckets)
+    .reduce((sum, b) => sum + b.off + b.mid + b.peak, 0);
   assert.strictEqual(Math.round(bucketSum * 100) / 100, 30,
     `버킷 합(${bucketSum})이 실제 증분 30kWh와 같아야 한다 — 겹친 증분이 남으면 영구 오염`);
 });

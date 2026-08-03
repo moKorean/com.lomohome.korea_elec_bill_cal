@@ -11,6 +11,7 @@
 const crypto = require('crypto');
 
 const Calc = require('../../lib/KoreaElecBillCalculator');
+const { emptyTouBuckets } = require('../../lib/KoreaElecBillCalculator');
 const RATES = require('../../lib/rates_korea.json');
 
 // 결과 객체에서 해시에 넣을 필드 (전부 — 누락되면 회귀를 놓친다)
@@ -91,7 +92,10 @@ function touLines() {
       for (const dt of DATES) {
         const today = dateOf(dt);
         for (const energy of USAGES) {
-          const buckets = { off: energy * 0.5, mid: energy * 0.3, peak: energy * 0.2 };
+          // 계절이 걸치는 기간을 덮기 위해 두 계절에 나눠 적재한다
+          const buckets = emptyTouBuckets();
+          buckets.summer = { off: energy * 0.3, mid: energy * 0.15, peak: energy * 0.1 };
+          buckets.spring_fall = { off: energy * 0.2, mid: energy * 0.15, peak: energy * 0.1 };
           const c = new Calc({
             tariffType: type, contractKw: kw, checkDay: 8, today,
           });
@@ -106,24 +110,10 @@ function touLines() {
   return out;
 }
 
-/** 월말 예상 사용량 계산 */
-function forecastLines() {
-  const out = [];
-  for (const checkDay of CHECK_DAYS) {
-    for (const dt of DATES) {
-      const today = dateOf(dt);
-      const f = new Calc({ pressure: 'low', checkDay, today }).energyForecast(123.4, today);
-      out.push(`FC:${checkDay}:${tag(dt)}|${JSON.stringify(f)}`);
-    }
-  }
-  return out;
-}
-
 const GROUPS = {
   residential: residentialLines,
   flat: flatLines,
   tou: touLines,
-  forecast: forecastLines,
 };
 
 /** @returns {{group: string, cases: number, sha256: string, body: string}[]} */

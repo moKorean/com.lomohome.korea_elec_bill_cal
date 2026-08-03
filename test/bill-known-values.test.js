@@ -16,6 +16,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const Calc = require('../lib/KoreaElecBillCalculator');
+const { emptyTouBuckets } = require('../lib/KoreaElecBillCalculator');
 
 const bill = (opts, energy, today) => new Calc({ ...opts, today }).calculate(energy, today);
 
@@ -165,7 +166,9 @@ test('시간대별(TOU) 일반용(갑)Ⅱ 고압A 선택Ⅰ — 부하별 단가
   assert.strictEqual(c.getTouRate('mid'), 140.6);
   assert.strictEqual(c.getTouRate('peak'), 163.1);
 
-  const r = c.calculate(1000, today, { off: 500, mid: 300, peak: 200 });
+  const buckets = emptyTouBuckets();
+  buckets.summer = { off: 500, mid: 300, peak: 200 };
+  const r = c.calculate(1000, today, buckets);
   assert.strictEqual(r.basicWon, 717000, '7,170 × 100kW');
   // 500×89.4 + 300×140.6 + 200×163.1 = 44,700 + 42,180 + 32,620 = 119,500
   assert.strictEqual(r.kwhWon, 119500);
@@ -201,4 +204,36 @@ test('전력산업기반기금은 2.7% (2025-07-01 인하 반영)', () => {
   // 기금 = floor(floor(전기요금계 × 0.027) / 10) × 10
   assert.strictEqual(r.baseFund, Math.floor(Math.floor(r.elecSumWon * 0.027) / 10) * 10);
   assert.strictEqual(r.vat, Math.round(r.elecSumWon * 0.1), '부가세 10%');
+});
+
+test('시간대별(TOU) 계절이 걸치면 계절별 단가가 각각 적용된다', () => {
+  // 요금표 일반용(갑)Ⅱ 고압A 선택Ⅰ 최대부하: 여름철 163.1 / 봄·가을철 108.1원/kWh
+  // 최대부하 200kWh를 여름·봄가을에 각각 쌓으면 200x163.1 + 200x108.1 = 54,240원.
+  // 이전 구현은 산출기간 시작월 하나로 계절을 정해 400kWh 전량을 한 단가로 계산했다
+  // (65,240원 또는 43,240원 — 최대 51% 오차).
+  const today = new Date(2026, 5, 30, 12, 0);
+  const c = new Calc({
+    tariffType: 'general_gap2_highA_s1', contractKw: 0, checkDay: 0, today,
+  });
+  const buckets = emptyTouBuckets();
+  buckets.summer.peak = 200;
+  buckets.spring_fall.peak = 200;
+
+  const r = c.calculate(400, today, buckets);
+  assert.strictEqual(r.kwhWon, 200 * 163.1 + 200 * 108.1);
+  assert.notStrictEqual(r.kwhWon, 400 * 163.1, '한 계절 단가로 뭉뚱그리지 않는다');
+  assert.notStrictEqual(r.kwhWon, 400 * 108.1);
+});
+
+test('전력산업기반기금은 전기요금계 총액에 한 번 적용된다', () => {
+  // 누진 경로와 정액/TOU 경로가 같은 식을 써야 한다: floor(전기요금계 x 2.7% / 10) x 10
+  const today = new Date(2026, 5, 30, 12, 0);
+  for (const opts of [
+    { pressure: 'low', checkDay: 8 },
+    { tariffType: 'general_gap1_low', contractKw: 10, checkDay: 8 },
+  ]) {
+    const r = bill(opts, 710, today);
+    assert.strictEqual(r.baseFund, Math.floor((r.elecSumWon * 0.027) / 10) * 10,
+      `${opts.tariffType || 'residential'} 기금 계산식`);
+  }
 });
